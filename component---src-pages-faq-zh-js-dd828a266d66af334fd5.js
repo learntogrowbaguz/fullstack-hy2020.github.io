@@ -1,0 +1,2 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[33],{nd9q:function(e,n,t){"use strict";t.r(n);var s=t("q1tI"),a=t.n(s),i=t("S6uJ");n.default=function(){return a.a.createElement(i.a,{lang:"zh",title:"常见问题 | 全栈公开课2022",seoDescription:"Frequently asked questions"})}}}]);
+//# sourceMappingURL=component---src-pages-faq-zh-js-dd828a266d66af334fd5.js.map
