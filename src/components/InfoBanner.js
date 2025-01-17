@@ -16,7 +16,7 @@ const InfoBanner = ({ visible, onHide }) => {
     flexWrap: 'wrap',
     flexDirection: 'row',
     alignContent: 'space-between',
-    backgroundColor: '#E8E8E8',
+    backgroundColor: 'var(--color-background)',
     zIndex: 2147483647,
   };
 
@@ -38,17 +38,16 @@ const InfoBanner = ({ visible, onHide }) => {
     outline: 'none',
     backgroundColor: 'transparent',
     border: 'none',
+    color: 'var(--color-text)',
+    cursor: 'pointer',
   };
 
   return (
     <div style={style}>
-      <div stule={textStyle}>
-        Note that some libraries might not work with the new React version 18.
-        If you run in trouble with library compatibility, read{' '}
-        <a href="/en/part1/a_more_complex_state_debugging_react_apps#a-note-on-react-version">
-          <span style={linkStyle}>this</span>
-        </a>
-        .
+      <div style={textStyle}>
+        <p style={{ marginBottom: 20}}>
+          A new exercise has been added at the on of Part 9 "Typing an Express app" at 28th August 2024. Because of that numbering the of Exercises 9.14- has changed.
+        </p>  
       </div>
       <div style={buttonDiv}>
         <button style={buttonStyle} onClick={onHide}>

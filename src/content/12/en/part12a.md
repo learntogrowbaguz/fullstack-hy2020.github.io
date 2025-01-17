@@ -5,11 +5,18 @@ letter: a
 lang: en
 ---
 
+<div class="tasks">
+
+The part was updated 21st Mar 2024: Create react app was replaced with Vite in the todo-frontend.
+
+If you started this part before the update, you can see [here](https://github.com/fullstack-hy2020/fullstack-hy2020.github.io/tree/4015af9dddb61cb01f013456d8728e8f553be347/src/content/12) the old material. There are some changes in the frontend configurations.
+</div>
+
 <div class="content">
 
-Software development includes the whole lifecycle from envisioning the software to programming and to releasing the software to the end-users and even maintaining it. This part will introduce containers, a modern tool utilized in the latter parts of the software lifecycle.
+Software development includes the whole lifecycle from envisioning the software to programming and to releasing it to the end-users, and even maintaining it. This part will introduce containers, a modern tool utilized in the latter parts of the software lifecycle.
 
-Containers encapsulate your application into a single package. This package will then include all of the dependencies with the application. As a result, each container can run isolated from the other containers.
+Containers encapsulate your application into a single package. This package will include the application and all of its dependencies. As a result, each container can run isolated from the other containers.
 
 Containers prevent the application inside from accessing files and resources of the device. Developers can give the contained applications permission to access files and specify available resources. More accurately, containers are OS-level virtualization. The easiest-to-compare technology is a virtual machine (VM). VMs are used to run multiple operating systems on a single physical machine. They have to run the whole operating system, whereas a container runs the software using the host operating system. The resulting difference between VMs and containers is that there is hardly any overhead when running containers; they only need to run a single process.
 
@@ -19,19 +26,19 @@ Cloud services like AWS, Google Cloud, and Microsoft Azure all support container
 
 So containers are used in cloud environment and even during development. What are the benefits of using containers? Here are two common scenarios:
 
-<i>Scenario 1: You are developing a new application that needs to run on the same machine as a legacy application. Both require different versions of Node installed.</i>
+<i>Scenario 1: You are developing a new application that needs to run on the same machine as a legacy application. Both require installing different versions of Node.</i>
 
 You can probably use nvm, virtual machines, or dark magic to get them running at the same time. However, containers are an excellent solution as you can run both applications in their respective containers. They are isolated from each other and do not interfere.
 
 <i>Scenario 2: Your application runs on your machine. You need to move the application to a server.</i>
 
-It is not uncommon that the application just does not run on the server despite it working just fine in your machine. It may be due to some missing dependency or other differences in the environments. Here containers are an excellent solution since you can run the application in the same execution environment both on your machine and on the server. It is not perfect: different hardware can be an issue, but you can limit the differences between environments.
+It is not uncommon that the application just does not run on the server despite it works just fine on your machine. It may be due to some missing dependency or other differences in the environments. Here containers are an excellent solution since you can run the application in the same execution environment both on your machine and on the server. It is not perfect: different hardware can be an issue, but you can limit the differences between environments.
 
 Sometimes you may hear about the <i>"Works in my container"</i> issue. The phrase describes a situation in which the application works fine in a container running on your machine but breaks when the container is started on a server. The phrase is a play on the infamous <i>"Works on my machine"</i> issue, which containers are often promised to solve. The situation also is most likely a usage error.
 
-### About this part ###
+### About this part
 
-In this part, the focus of our attention will not be on the JavaScript code. Instead, we are interested in the configuration of the environment in which the software is executed. As a result, the exercises may not contain any coding, the applications are available to you through GitHub and your tasks will include configuring them. The exercises are to be submitted to <i>a single GitHub repository</i> which will include all of the source code and configuration you do during this part.
+In this part, the focus of our attention will not be on the JavaScript code. Instead, we are interested in the configuration of the environment in which the software is executed. As a result, the exercises may not contain any coding, the applications are available to you through GitHub and your tasks will include configuring them. The exercises are to be submitted to <i>a single GitHub repository</i> which will include all of the source code and the configurations that you do during this part.
 
 You will need basic knowledge of Node, Express, and React. Only the core parts, 1 through 5, are required to be completed before this part.
 
@@ -48,7 +55,7 @@ If you have only ever used a graphical user interface and never touched e.g. Lin
 
 #### Exercise 12.1: Using a computer (without graphical user interface)
 
-Step 1: Read the text below the Warning header.
+Step 1: Read the text below the "Warning" header.
 
 Step 2: Download this [repository](https://github.com/fullstack-hy2020/part12-containers-applications) and make it your submission repository for this part.
 
@@ -57,7 +64,7 @@ Step 3: Run <i>curl http://helsinki.fi</i> and save the output into a file. Save
 </div>
 <div class="content">
 
-### Submitting exercises and earning credits ###
+### Submitting exercises and earning credits
 
 Submit the exercises via the [submissions system](https://studies.cs.helsinki.fi/stats/) just like in the previous parts. Exercises in this part are submitted <i>to its [own course instance](https://studies.cs.helsinki.fi/stats/courses/fs-containers)</i>.
 
@@ -77,7 +84,7 @@ The basic tools you are going to need vary between operating systems:
 * Terminal on Mac
 * Command Line on a Linux
 
-### Installing everything required for this part ###
+### Installing everything required for this part
 
 We will begin by installing the required software. The installation step will be one of the possible obstacles. As we are dealing with OS-level virtualization, the tools will require superuser access on the computer. They will have access to your operating systems kernel.
 
@@ -85,21 +92,20 @@ The material is built around [Docker](https://www.docker.com/), a set of product
 
 As the install instructions depend on your operating system, you will have to find the correct install instructions from the link below. Note that they may have multiple different options for your operating system. 
 
-
 - [Get Docker](https://docs.docker.com/get-docker/)
 
 Now that that headache is hopefully over, let's make sure that our versions match. Yours may have a bit higher numbers than here:
 
 ```bash
 $ docker -v
-Docker version 20.10.5, build 55c4c88
+Docker version 25.0.3, build 4debf41
 ```
 
 ### Containers and images
 
-There are two core concepts when starting with containers and they are easy to confuse with one another:
+There are two core concepts in this part: <i>container</i> and <i>image</i>. They are easy to confuse with one another.
 
-A **container** is a runtime instance of an **image**.
+A <i>container</i> is a runtime instance of an <i>image</i>.
 
 Both of the following statements are true:
 
@@ -115,18 +121,18 @@ Cooking metaphor:
 * Image is pre-cooked, frozen treat.
 * Container is the delicious treat.
 
-[Docker](https://www.docker.com/) is the most popular containerization technology and pioneered the standards most containerization technologies use today. In practice, Docker is a set of products that help us to manage images and containers. This set of products will enable us to leverage all of the benefits of containers. For example, the docker engine will take care of turning the immutable files called images into containers.
+[Docker](https://www.docker.com/) is the most popular containerization technology and pioneered the standards most containerization technologies use today. In practice, Docker is a set of products that help us to manage images and containers. This set of products will enable us to leverage all of the benefits of containers. For example, the Docker engine will take care of turning the immutable files called images into containers.
 
-For managing the docker containers, there is also a tool called [Docker Compose](https://docs.docker.com/compose/) that allows one to **orchestrate** (control) multiple containers at the same time. In this part we shall use Docker Compose to set up a complex local development environment. In the final version of the development environment that we set up, even installing the Node to our machine is not a requirement anymore.
+For managing the Docker containers, there is also a tool called [Docker Compose](https://docs.docker.com/compose/) that allows one to **orchestrate** (control) multiple containers at the same time. In this part we shall use Docker Compose to set up a complex local development environment. In the final version of the development environment that we will set up, even installing Node in our machine will not be required anymore.
 
 There are several concepts we need to go over. But we will skip those for now and learn about Docker first! 
 
-Let us start with the command <i>docker container run</i> that is used to run images within a container. The command structure is the following: _container run <i>IMAGE-NAME</i>_ that we will tell Docker to create a container from an image. A particularily nice feature of the command is that it can run a container even if the image to run is not downloaded on our device yet.
+Let us start with the command <i>docker container run</i> that is used to run images within a container. The command structure is the following: _container run <i>IMAGE-NAME</i>_ that we will tell Docker to create a container from an image. A particularly nice feature of the command is that it can run a container even if the image to run is not downloaded on our device yet.
 
 Let us run the command
 
 ```bash
-§ docker container run hello-world
+$ docker container run hello-world
 ```
 
 There will be a lot of output, but let's split it into multiple sections, which we can decipher together. The lines are numbered by me so that it is easier to follow the explanation. Your output will not have the numbers.
@@ -148,11 +154,11 @@ The first part of the message states that we did not have the image "hello-world
 In this case the 3 missing fields defaulted to: 
 - _index.docker.io/library/hello-world:latest_
 
-The second row shows the organisation name, "library" where it will get the image. In the Docker Hub url, the "library" is shortened to _.
+The second row shows the organisation name, "library" where it will get the image. In the Docker Hub URL, the "library" is shortened to _.
 
 The 3rd and 5th rows only show the status. But the 4th row may be interesting: each image has a unique digest based on the <i>layers</i> from which the image is built. In practice, each step or command that was used in building the image creates a unique layer. The digest is used by Docker to identify that an image is the same. This is done when you try to pull the same image again.
 
-So the result of using the command was a pull and then output information about the **image**. After that, the status told us that a new version of hello-world:latest was indeed downloaded. You can try pulling the image with _docker image pull hello-world_ and see what happens.
+So the result of using the command was a pull and then output information about the **image**. After that, the status told us that a new version of <i>hello-world:latest</i> was indeed downloaded. You can try pulling the image with _docker image pull hello-world_ and see what happens.
 
 The following output was from the container itself. It also explains what happened when we ran _docker container run hello-world_.
 
@@ -188,7 +194,7 @@ The output contains a few new things for us to learn. <i>Docker daemon</i> is a 
 ### Exercise 12.2
 
 Some of these exercises do not require you to write any code or configurations to a file.
-In these exercises you should use [script](https://man7.org/linux/man-pages/man1/script.1.html) command to record the commands you have used; try it yourself with _script_ to start recording, _echo "hello"_ to generate some output, and _exit_ to stop recording. It saves your actions into a file names "typescript".
+In these exercises you should use [script](https://man7.org/linux/man-pages/man1/script.1.html) command to record the commands you have used; try it yourself with _script_ to start recording, _echo "hello"_ to generate some output, and _exit_ to stop recording. It saves your actions into a file named "typescript" (that has nothing to do with the TypeScript programming language, the name is just a coincidence).
 
 If _script_ does not work, you can just copy-paste all commands you used into a text file.
 
@@ -196,17 +202,17 @@ If _script_ does not work, you can just copy-paste all commands you used into a 
 
 > Use _script_ to record what you do, save the file as script-answers/exercise12_2.txt
 
-The hello-world output gave us an ambitious task to do. Do the following
+The hello-world output gave us an ambitious task to do. Do the following:
 
-Step 1. Run an Ubuntu container with the command given by hello-world
+- Step 1. Run an Ubuntu container with the command given by hello-world
 
 The step 1 will connect you straight into the container with bash. You will have access to all of the files and tools inside of the container. The following steps are run within the container:
 
-Step 2. Create directory <i>/usr/src/app</i>
+- Step 2. Create directory <i>/usr/src/app</i>
 
-Step 3. Create a file <i>/usr/src/app/index.js</i>
+- Step 3. Create a file <i>/usr/src/app/index.js</i>
 
-Step 4. Run <i>exit</i> to quit from the container
+- Step 4. Run <i>exit</i> to quit from the container
 
 Google should be able to help you with creating directories and files.
 
@@ -216,7 +222,7 @@ Google should be able to help you with creating directories and files.
 
 ### Ubuntu image
 
-The command you just used to run the ubuntu container, _docker container run -it ubuntu bash_, contains a few additions to the previously run hello-world. Let's see the --help to get a better understanding. I'll cut some of the output so we can focus on the relevant parts.
+The command you just used to run the Ubuntu container, _docker container run -it ubuntu bash_, contains a few additions to the previously run hello-world. Let's see the --help to get a better understanding. I'll cut some of the output so we can focus on the relevant parts.
 
 ```bash
 $ docker container run --help
@@ -231,17 +237,19 @@ Options:
   ...
 ```
 
-The two options, or flags, _-it_ make sure we can interact with the container. After the options, we defined that image to run is _ubuntu_. Then we have the command _bash_ to be executed inside the container when we start it.
+The two options, or flags, _-it_ make sure we can interact with the container. After the options, we defined that the image to run is _ubuntu_. Then we have the command _bash_ to be executed inside the container when we start it.
 
-You can try other commands that the ubuntu image might be able to execute. As an example try _docker container run --rm ubuntu ls_. The _ls_ command will list all of the files in the directory and _--rm_ flag will remove the container after execution. Normally containers are not deleted automatically.
+You can try other commands that the Ubuntu image might be able to execute. As an example try _docker container run --rm ubuntu ls_. The _ls_ command will list all of the files in the directory and _--rm_ flag will remove the container after execution. Normally containers are not deleted automatically.
 
-Let's continue with our first ubuntu container with the **index.js** file inside of it. The container has stopped running since we exited it. We can list all of the containers with _container ls -a_, the _-a_ (or --all) will list containers that have already been exited.
+Let's continue with our first Ubuntu container with the **index.js** file inside of it. The container has stopped running since we exited it. We can list all of the containers with _container ls -a_, the _-a_ (or --all) will list containers that have already been exited.
 
 ```bash
 $ docker container ls -a
 CONTAINER ID   IMAGE     COMMAND   CREATED          STATUS                            NAMES
 b8548b9faec3   ubuntu    "bash"    3 minutes ago    Exited (0) 6 seconds ago          hopeful_clarke
 ```
+
+> <i>Editor's note: the command _docker container ls_ has also a shorter form _docker ps_</i>, I prefer the shorter one.
 
 We have two options when addressing a container. The identifier in the first column can be used to interact with the container almost always. Plus, most commands accept the container name as a more human-friendly method of working with them. The name of the container was automatically generated to be **"hopeful_clarke"** in my case.
 
@@ -252,9 +260,9 @@ $ docker start hopeful_clarke
 hopeful_clarke
 ```
 
-The start command will start the same container we had previously. Unfortunately, we forgot to start it with the flag _--interactive_ so we can not interact with it.
+The start command will start the same container we had previously. Unfortunately, we forgot to start it with the flag _--interactive_ (that can also be written _-i_) so we can not interact with it.
 
-The container is actually up and running as the command _container ls -a_ shows, but we just can not communicate it:
+The container is actually up and running as the command _container ls -a_ shows, but we just can not communicate with it:
 
 ```bash
 $ docker container ls -a
@@ -292,7 +300,7 @@ $ docker start -i hopeful_clarke
 root@b8548b9faec3:/#
 ```
 
-Let's edit the file <i>index.js</i> and add in some JavaScript code to execute. We are just missing the tools to edit the file. Nano will be a good text editor for now. The install instructions were found from the first result of Google. We will omit using sudo since we are already root.
+Let's edit the file <i>index.js</i> and add in some JavaScript code to execute. We are just missing the tools to edit the file. [Nano](https://www.nano-editor.org/) will be a good text editor for now. The install instructions were found from the first result of Google. We will omit using sudo since we are already root.
 
 ```bash
 root@b8548b9faec3:/# apt-get update
@@ -300,7 +308,7 @@ root@b8548b9faec3:/# apt-get -y install nano
 root@b8548b9faec3:/# nano /usr/src/app/index.js
 ```
 
-Now we have nano installed and can start editing files!
+Now we have Nano installed and can start editing files!
 
 </div>
 
@@ -312,7 +320,7 @@ Now we have nano installed and can start editing files!
 
 > Use _script_ to record what you do, save the file as script-answers/exercise12_3.txt
 
-Edit the _/usr/src/app/index.js_ file inside the container with the now installed nano and add the following line
+Edit the _/usr/src/app/index.js_ file inside the container with the now installed Nano and add the following line
 
 ```js
 console.log('Hello World')
@@ -329,13 +337,13 @@ Install Node while inside the container and run the index file with _node /usr/s
 The instructions for installing Node are sometimes hard to find, so here is something you can copy-paste:
 
 ```bash
-curl -sL https://deb.nodesource.com/setup_16.x | bash
+curl -sL https://deb.nodesource.com/setup_20.x | bash
 apt install -y nodejs
 ```
 
 You will need to install the _curl_ into the container. It is installed in the same way as you did with _nano_.
 
-After the installation, ensure that you can run your code inside the container with command
+After the installation, ensure that you can run your code inside the container with the command:
 
 ```
 root@b8548b9faec3:/# node /usr/src/app/index.js
@@ -346,9 +354,15 @@ Hello World
 
 <div class="content">
 
-### Other docker commands
+### Other Docker commands
 
-Now that we have Node installed in the container we can execute JavaScript in the container! Let's create a new image from the container. The _commit <i>CONTAINER-ID-OR-CONTAINER-NAME</i> <i>NEW-IMAGE-NAME</i>_ will create a new image that includes the changes we have made. You can use _container diff_ to check for the changes between the original image and container before doing so.
+Now that we have Node installed in the container, we can execute JavaScript in the container! Let's create a new image from the container. The command 
+
+```bash
+commit CONTAINER-ID-OR-CONTAINER-NAME NEW-IMAGE-NAME
+```
+
+will create a new image that includes the changes we have made. You can use _container diff_ to check for the changes between the original image and container before doing so.
 
 ```bash
 $ docker commit hopeful_clarke hello-node-world
@@ -371,7 +385,7 @@ docker run -it hello-node-world bash
 root@4d1b322e1aff:/# node /usr/src/app/index.js
 ```
 
-There are multiple ways to achieve the same conclusion. Let's go through a better solution. We will clean the slate with _container rm_ to remove the old container.
+There are multiple ways to do the same. Let's try a better solution. We will clean the slate with _container rm_ to remove the old container.
 
 ```bash
 $ docker container ls -a
@@ -384,12 +398,12 @@ hopeful_clarke
 
 Create a file <i>index.js</i> to your current directory and write _console.log('Hello, World')_ inside it. No need for containers yet.
 
-Next, let's skip installing Node altogether. There are plenty of useful Docker images in Docker Hub ready for our use. Let's use the image [https://hub.docker.com/_/Node](https://hub.docker.com/_/Node), which has Node already installed. We only need to pick a version.
+Next, let's skip installing Node altogether. There are plenty of useful Docker images in Docker Hub ready for our use. Let's use the image [https://hub.docker.com/_/node](https://hub.docker.com/_/node), which has Node already installed. We only need to pick a version.
 
 By the way, the _container run_ accepts _--name_ flag that we can use to give a name for the container.
 
 ```bash
-$ docker container run -it --name hello-node node:16 bash
+$ docker container run -it --name hello-node node:20 bash
 ```
 
 Let us create a directory for the code inside the container:

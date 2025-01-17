@@ -59,7 +59,7 @@ const start = async () => {
 start()
 ```
 
-Starting the application is slightly different from what we have seen before, because we want to make sure that the dabase connection is established successfully before the actual startup.
+Starting the application is slightly different from what we have seen before, because we want to make sure that the database connection is established successfully before the actual startup.
 
 The file <i>util/db.js</i> contains the code to initialize the database:
 
@@ -67,14 +67,7 @@ The file <i>util/db.js</i> contains the code to initialize the database:
 const Sequelize = require('sequelize')
 const { DATABASE_URL } = require('./config')
 
-const sequelize = new Sequelize(DATABASE_URL, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
-});
+const sequelize = new Sequelize(DATABASE_URL)
 
 const connectToDatabase = async () => {
   try {
@@ -238,13 +231,13 @@ The current code for the application is in its entirety on [GitHub](https://gith
 
 <div class="tasks">
 
-### Tasks 13.5.-13.7.
+### Exercises 13.5.-13.7.
 
-#### Task 13.5.
+#### Exercise 13.5.
 
 Change the structure of your application to match the example above, or to follow some other similar clear convention.
 
-#### Task 13.6.
+#### Exercise 13.6.
 
 Also, implement support for changing the number of a blog's likes in the application, i.e. the operation
 
@@ -258,7 +251,7 @@ The updated number of likes will be relayed with the request:
 }
 ```
 
-#### Task 13.7.
+#### Exercise 13.7.
 
 Centralize the application error handling in middleware as in [part 3](/en/part3/saving_data_to_mongo_db#moving-error-handling-into-middleware). You can also enable middleware [express-async-errors](https://github.com/davidbanham/express-async-errors) as we did in [part 4](/en/part4/testing_the_backend#eliminating-the-try-catch).
 
@@ -316,6 +309,7 @@ The file <i>models/index.js</i> expands slightly:
 const Note = require('./note')
 const User = require('./user') // highlight-line
 
+Note.sync()
 User.sync() // highlight-line
 
 module.exports = {
@@ -439,7 +433,7 @@ The current code for the application is in its entirety on [GitHub](https://gith
 
 ### Connection between the tables
 
-Users can now be added to the application and users can log in, but this in itself this is not a very useful feature yet. We would like to add the features that only a logged-in user can add notes, and that each note is associated with the user who created it. To do this, we need to add a <i>foreign key</i> to the <i>notes</i> table.
+Users can now be added to the application and users can log in, but this in itself is not a very useful feature yet. We would like to add the features that only a logged-in user can add notes, and that each note is associated with the user who created it. To do this, we need to add a <i>foreign key</i> to the <i>notes</i> table.
 
 When using Sequelize, a foreign key can be defined by modifying the <i>models/index.js</i> file as follows
 
@@ -463,7 +457,7 @@ module.exports = {
 So this is how we [define](https://sequelize.org/master/manual/assocs.html#one-to-many-relationships) that there is a _one-to-many_ relationship connection between the <i>users</i> and <i>notes</i> entries. We also changed the options of the <i>sync</i> calls so that the tables in the database match changes made to the model definitions. The database schema looks like the following from the console:
 
 ```js
-username=> \d users
+postgres=# \d users
                                      Table "public.users"
   Column | Type | Collation | Nullable | Default
 ----------+------------------------+-----------+----------+-----------------------------------
@@ -475,7 +469,7 @@ Indexes:
 Referenced by:
     TABLE "notes" CONSTRAINT "notes_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL
 
-username=> \d notes
+postgres=# \d notes
                                       Table "public.notes"
   Column | Type | Collation | Nullable | Default
 -----------+--------------------------+-----------+----------+-----------------------------------
@@ -551,10 +545,10 @@ const tokenExtractor = (req, res, next) => {
     try {
       req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
     } catch{
-      res.status(401).json({ error: 'token invalid' })
+      return res.status(401).json({ error: 'token invalid' })
     }
   }  else {
-    res.status(401).json({ error: 'token missing' })
+    return res.status(401).json({ error: 'token missing' })
   }
   next()
 }
@@ -621,7 +615,7 @@ const user = await User.findByPk(req.decodedToken.id)
 const note = await Note.create({ ...req.body, userId: user.id, date: new Date() })
 ```
 
-The reason for this is that we specificed in the file <i>models/index.js</i> that there is a one-to-many connection between users and notes:
+The reason for this is that we specified in the file <i>models/index.js</i> that there is a one-to-many connection between users and notes:
 
 ```js
 const Note = require('./note')
@@ -635,7 +629,7 @@ Note.belongsTo(User)
 
 Sequelize will automatically create an attribute called <i>userId</i> on the <i>Note</i> model to which, when referenced gives access to the database column <i>user_id</i>.
 
-Keep in mind, that we could also create a note as follows using the [build](https://sequelize.org/master/class/lib/model.js~Model.html#static-method-build) method:
+Keep in mind, that we could also create a note as follows using the [build](https://sequelize.org/api/v6/class/src/model.js~model#static-method-build) method:
 
 ```js
 const user = await User.findByPk(req.decodedToken.id)
@@ -699,16 +693,16 @@ Instead we can achieve the same with this. Using one of the two methods is neces
 
 <div class="tasks">
 
-### Tasks 13.8.-13.11.
+### Exercises 13.8.-13.12.
 
-#### Task 13.8.
+#### Exercise 13.8.
 
 Add support for users to the application. In addition to ID, users have the following fields:
 
 - name (string, must not be empty)
 - username (string, must not be empty)
 
-Unlike in the material, do not now prevent Sequelize from creating [timestamps](https://sequelize.org/master/manual/model-basics.html#timestamps) <i>created\_at</i> and <i>updated\_at</i> for users
+Unlike in the material, do not prevent Sequelize from creating [timestamps](https://sequelize.org/master/manual/model-basics.html#timestamps) <i>created\_at</i> and <i>updated\_at</i> for users
 
 All users can have the same password as the material. You can also choose to properly implement passwords as in [part 4](/en/part4/user_administration).
 
@@ -744,7 +738,7 @@ Expand the application so that the current logged-in user identified by a token 
 
 Make deletion of a blog only possible for the user who added the blog.
 
-#### Task 13.12.
+#### Exercise 13.12.
 
 Modify the routes for retrieving all blogs and all users so that each blog shows the user who added it and each user shows the blogs they have added.
 
@@ -763,7 +757,7 @@ router.get('/', async (req, res) => {
   const notes = await Note.findAll({
     attributes: { exclude: ['userId'] },
     include: {
-      model: user,
+      model: User,
       attributes: ['name']
     },
     // highlight-start
@@ -805,7 +799,7 @@ router.get('/', async (req, res) => {
   const notes = await Note.findAll({
     attributes: { exclude: ['userId'] },
     include: {
-      model: user,
+      model: User,
       attributes: ['name']
     },
     where: {
@@ -844,6 +838,33 @@ where: {
 
 depending on the value of the query parameter.
 
+The database might now contain some note rows that do not have the value for the column
+<i>important</i> set. After the above changes, these notes can not be found with the queries. Let us set the missing values in the psql console and change the schema so that the column does not allow a null value:
+
+```js
+Note.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    important: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false, // highlight-line
+    },
+    date: {
+      type: DataTypes.DATE,
+    },
+  },
+  // ...
+)
+```
+
 The functionality can be further expanded by allowing the user to specify a required keyword when retrieving notes, e.g. a request to http://localhost:3001/api/notes?search=database will return all notes mentioning <i>database</i> or a request to http://localhost:3001/api/notes?search=javascript&important=true will return all notes marked as important and mentioning <i>javascript</i>. The implementation is as follows
 
 ```js
@@ -859,7 +880,7 @@ router.get('/', async (req, res) => {
   const notes = await Note.findAll({
     attributes: { exclude: ['userId'] },
     include: {
-      model: user,
+      model: User,
       attributes: ['name']
     },
     where: {
@@ -911,7 +932,7 @@ router.get('/', async (req, res) => {
   const notes = await Note.findAll({
     attributes: { exclude: ['userId'] },
     include: {
-      model: user,
+      model: User,
       attributes: ['name']
     },
     where
@@ -942,9 +963,9 @@ The current code for the application is in its entirety on [GitHub](https://gith
 
 <div class="tasks">
 
-### Tasks 13.13.-13.16
+### Exercises 13.13.-13.16
 
-#### Task 13.13.
+#### Exercise 13.13.
 
 Implement filtering by keyword in the application for the route returning all blogs. The filtering should work as follows
 - _GET /api/blogs?search=react_ returns all blogs with the search word <i>react</i> in the <i>title</i> field, the search word is case-insensitive
@@ -961,7 +982,7 @@ _GET /api/blogs?search=jami_ returns blogs with the search word <i>jami</i> in t
 
 Modify the blogs route so that it returns blogs based on likes in descending order. Search the [documentation](https://sequelize.org/master/manual/model-querying-basics.html) for instructions on ordering,
 
-#### Task 13.16.
+#### Exercise 13.16.
 
 Make a route for the application _/api/authors_ that returns the number of blogs for each author and the total number of likes. Implement the operation directly at the database level. You will most likely need the [group by](https://sequelize.org/master/manual/model-querying-basics.html#grouping) functionality, and the [sequelize.fn](https://sequelize.org/master/manual/model-querying-basics.html#specifying-attributes-for-select-queries) aggregator function.
 
