@@ -7,7 +7,6 @@ lang: en
 
 <div class="content">
 
-
 There are usually constraints that we want to apply to the data that is stored in our application's database. Our application shouldn't accept notes that have a missing or empty <i>content</i> property. The validity of the note is checked in the route handler:
 
 ```js
@@ -23,12 +22,9 @@ app.post('/api/notes', (request, response) => {
 })
 ```
 
-
 If the note does not have the <i>content</i> property, we respond to the request with the status code <i>400 bad request</i>.
 
-
-One smarter way of validating the format of the data before it is stored in the database, is to use the [validation](https://mongoosejs.com/docs/validation.html) functionality available in Mongoose.
-
+One smarter way of validating the format of the data before it is stored in the database is to use the [validation](https://mongoosejs.com/docs/validation.html) functionality available in Mongoose.
 
 We can define specific validation rules for each field in the schema:
 
@@ -40,21 +36,14 @@ const noteSchema = new mongoose.Schema({
     minLength: 5,
     required: true
   },
-  date: { 
-    type: Date,
-    required: true
-  },
   // highlight-end
   important: Boolean
 })
 ```
 
+The <i>content</i> field is now required to be at least five characters long and it is set as required, meaning that it can not be missing. We have not added any constraints to the <i>important</i> field, so its definition in the schema has not changed.
 
-The <i>content</i> field is now required to be at least five characters long. The <i>date</i> field is set as required, meaning that it can not be missing. The same constraint is also applied to the <i>content</i> field, since the minimum length constraint allows the field to be missing. We have not added any constraints to the <i>important</i> field, so its definition in the schema has not changed.
-
-
-The <i>minLength</i> and <i>required</i> validators are [built-in](https://mongoosejs.com/docs/validation.html#built-in-validators) and provided by Mongoose. The Mongoose [custom validator](https://mongoosejs.com/docs/validation.html#custom-validators) functionality allows us to create new validators, if none of the built-in ones cover our needs.
-
+The <i>minLength</i> and <i>required</i> validators are [built-in](https://mongoosejs.com/docs/validation.html#built-in-validators) and provided by Mongoose. The Mongoose [custom validator](https://mongoosejs.com/docs/validation.html#custom-validators) functionality allows us to create new validators if none of the built-in ones cover our needs.
 
 If we try to store an object in the database that breaks one of the constraints, the operation will throw an exception. Let's change our handler for creating a new note so that it passes any potential exceptions to the error handler middleware:
 
@@ -65,7 +54,6 @@ app.post('/api/notes', (request, response, next) => { // highlight-line
   const note = new Note({
     content: body.content,
     important: body.important || false,
-    date: new Date(),
   })
 
   note.save()
@@ -75,7 +63,6 @@ app.post('/api/notes', (request, response, next) => { // highlight-line
     .catch(error => next(error)) // highlight-line
 })
 ```
-
 
 Let's expand the error handler to deal with these validation errors:
 
@@ -95,10 +82,10 @@ const errorHandler = (error, request, response, next) => {
 
 When validating an object fails, we return the following default error message from Mongoose:
 
-![](../../images/3/50.png)
+![postman showing error message](../../images/3/50.png)
 
 We notice that the backend has now a problem: validations are not done when editing a note.
-The [documentation](https://github.com/blakehaswell/mongoose-unique-validator#find--updates) explains what is the problem, validations are not run by default when <i>findOneAndUpdate</i> is executed.
+The [documentation](https://mongoosejs.com/docs/validation.html#update-validators) addresses the issue by explaining that validations are not run by default when <i>findOneAndUpdate</i> and related methods are executed.
 
 The fix is easy. Let us also reformulate the route code a bit:
 
@@ -120,29 +107,45 @@ app.put('/api/notes/:id', (request, response, next) => {
 
 ### Deploying the database backend to production
 
-The application should work almost as-is in Heroku. We do have to generate a new production build of the frontend due to the changes that we have made to our frontend. 
+The application should work almost as-is in Fly.io/Render. We do not have to generate a new production build of the frontend since changes thus far were only on our backend.
 
-The environment variables defined in dotenv will only be used when the backend is not in <i>production mode</i>, i.e. Heroku.
+The environment variables defined in dotenv will only be used when the backend is not in <i>production mode</i>, i.e. Fly.io or Render.
 
-We defined the environment variables for development in file <i>.env</i>, but the environment variable that defines the database URL in production should be set to Heroku with the _heroku config:set_ command.
+For production, we have to set the database URL in the service that is hosting our app.
 
-```bash
-heroku config:set MONGODB_URI=mongodb+srv://fullstack:secretpasswordhere@cluster0-ostce.mongodb.net/note-app?retryWrites=true
-```
-
-**NB:** if the command causes an error, give the value of MONGODB_URI in apostrophes:
+In Fly.io that is done _fly secrets set_:
 
 ```bash
-heroku config:set MONGODB_URI='mongodb+srv://fullstack:secretpasswordhere@cluster0-ostce.mongodb.net/note-app?retryWrites=true'
+fly secrets set MONGODB_URI='mongodb+srv://fullstack:thepasswordishere@cluster0.a5qfl.mongodb.net/noteApp?retryWrites=true&w=majority'
 ```
 
-The application should now work. Sometimes things don't go according to plan. If there are problems, <i>heroku logs</i> will be there to help. My own application did not work after making the changes. The logs showed the following:
+When the app is being developed, it is more than likely that something fails. Eg. when I deployed my app for the first time with the database, not a single note was seen:
 
-![](../../images/3/51a.png)
+![browser showing no notes appearing](../../images/3/fly-problem1.png)
 
-For some reason the URL of the database was undefined. The <i>heroku config</i> command revealed that I had accidentally defined the URL to the <em>MONGO\_URL</em> environment variable, when the code expected it to be in <em>MONGODB\_URI</em>.
+The network tab of the browser console revealed that fetching the notes did not succeed, the request just remained for a long time in the _pending_ state until it failed with status code 502.
 
-You can find the code for our current application in its entirety in the <i>part3-5</i> branch of [this github repository](https://github.com/fullstack-hy2019/part3-notes-backend/tree/part3-5).
+The browser console has to be open <i>all the time!</i>
+
+It is also vital to follow continuously the server logs. The problem became obvious when the logs were opened with  _fly logs_:
+
+![fly.io server log showing connecting to undefined](../../images/3/fly-problem3.png)
+
+The database url was _undefined_, so the command *fly secrets set MONGODB\_URI* was forgotten.
+
+You will also need to whitelist the fly.io app's IP address in MongoDB Atlas. If you don't MongoDB will refuse the connection.
+
+Sadly, fly.io does not provide you a dedicated IPv4 address for your app, so you will need to allow all IP addresses in MongoDB Atlas.
+
+When using Render, the database url is given by defining the proper env in the dashboard:
+
+![render dashboard showing the MONGODB_URI env variable](../../images/3/render-env.png)
+
+The Render Dashboard shows the server logs:
+
+![render dashboard with arrow pointing to server running on port 10000](../../images/3/r7.png)
+
+You can find the code for our current application in its entirety in the <i>part3-6</i> branch of [this GitHub repository](https://github.com/fullstack-hy2020/part3-notes-backend/tree/part3-6).
 
 </div>
 
@@ -150,7 +153,7 @@ You can find the code for our current application in its entirety in the <i>part
 
 ### Exercises 3.19.-3.21.
 
-#### 3.19*: Phonebook database, step7
+#### 3.19*: Phonebook database, step 7
 
 Expand the validation so that the name stored in the database has to be at least three characters long.
 
@@ -164,33 +167,38 @@ personService
     })
     .catch(error => {
       // this is the way to access the error message
-      console.log(error.response.data)
+      console.log(error.response.data.error)
     })
 ```
 
 You can display the default error message returned by Mongoose, even though they are not as readable as they could be:
 
-![](../../images/3/56e.png)
+![phonebook screenshot showing person validation failure](../../images/3/56e.png)
 
 **NB:** On update operations, mongoose validators are off by default. [Read the documentation](https://mongoosejs.com/docs/validation.html) to determine how to enable them.
 
-#### 3.20*: Phonebook database, step8
+#### 3.20*: Phonebook database, step 8
 
-Add validation to your phonebook application, that will make sure that phone numbers are of the correct form. A phone number must 
-- has length of 8 or more
-- if formed of two parts that are separated by -, the first part has two or three numbers and the second part also consists of numbers
-  - eg. 09-1234556 and 040-22334455 are valid phone numbers
-  - eg. 1234556, 1-22334455 and 10-22-334455 are invalid
+Add validation to your phonebook application, which will make sure that phone numbers are of the correct form. A phone number must:
+
+- have length of 8 or more
+- be formed of two parts that are separated by -, the first part has two or three numbers and the second part also consists of numbers
+    - eg. 09-1234556 and 040-22334455 are valid phone numbers
+    - eg. 1234556, 1-22334455 and 10-22-334455 are invalid
 
 Use a [Custom validator](https://mongoosejs.com/docs/validation.html#custom-validators) to implement the second part of the validation.
 
-If an HTTP POST request tries to add a name that is already in the phonebook, the server must respond with an appropriate status code and error message.
+If an HTTP POST request tries to add a person with an invalid phone number, the server should respond with an appropriate status code and error message.
 
 #### 3.21 Deploying the database backend to production
 
-Generate a new "full stack" version of the application by creating a new production build of the frontend, and copy it to the backend repository. Verify that everything works locally by using the entire application from the address <http://localhost:3001/>.
+Generate a new "full stack" version of the application by creating a new production build of the frontend, and copying it to the backend repository. Verify that everything works locally by using the entire application from the address <http://localhost:3001/>.
 
-Push the latest version to Heroku and verify that everything works there as well.
+Push the latest version to Fly.io/Render and verify that everything works there as well.
+
+**NOTE**: you should deploy the BACKEND to the cloud service. If you are using Fly.io the commands should be run in the root directory of the backend (that is, in the same directory where the backend package.json is). In case of using Render, the backend must be in the root of your repository.
+
+You shall NOT be deploying the frontend directly at any stage of this part. It is just backend repository that is deployed throughout the whole part, nothing else.
 
 </div>
 
@@ -198,19 +206,18 @@ Push the latest version to Heroku and verify that everything works there as well
 
 ### Lint
 
-Before we move onto the next part, we will take a look at an important tool called [lint](<https://en.wikipedia.org/wiki/Lint_(software)>). Wikipedia says the following about lint:
+Before we move on to the next part, we will take a look at an important tool called [lint](<https://en.wikipedia.org/wiki/Lint_(software)>). Wikipedia says the following about lint:
 
 > <i>Generically, lint or a linter is any tool that detects and flags errors in programming languages, including stylistic errors. The term lint-like behavior is sometimes applied to the process of flagging suspicious language usage. Lint-like tools generally perform static analysis of source code.</i>
 
 In compiled statically typed languages like Java, IDEs like NetBeans can point out errors in the code, even ones that are more than just compile errors. Additional tools for performing [static analysis](https://en.wikipedia.org/wiki/Static_program_analysis) like [checkstyle](https://checkstyle.sourceforge.io), can be used for expanding the capabilities of the IDE to also point out problems related to style, like indentation.
 
+In the JavaScript universe, the current leading tool for static analysis (aka "linting") is [ESlint](https://eslint.org/).
 
-In the JavaScript universe, the current leading tool for static analysis aka. "linting" is [ESlint](https://eslint.org/).
-
-Let's install ESlint as a development dependency to the backend project with the command:
+Let's install ESlint as a development dependency to the notes backend project with the command:
 
 ```bash
-npm install eslint --save-dev
+npm install eslint @eslint/js --save-dev
 ```
 
 After this we can initialize a default ESlint configuration with the command:
@@ -221,50 +228,101 @@ npx eslint --init
 
 We will answer all of the questions:
 
-![](../../images/3/52be.png)
+![terminal output from ESlint init](../../images/3/lint1.png)
 
-The configuration will be saved in the _.eslintrc.js_ file:
-
-```js
-module.exports = {
-    'env': {
-        'commonjs': true,
-        'es2021': true,
-        'node': true
-    },
-    'extends': 'eslint:recommended',
-    'parserOptions': {
-        'ecmaVersion': 'latest'
-    },
-    'rules': {
-        'indent': [
-            'error',
-            4
-        ],
-        'linebreak-style': [
-            'error',
-            'unix'
-        ],
-        'quotes': [
-            'error',
-            'single'
-        ],
-        'semi': [
-            'error',
-            'never'
-        ]
-    }
-}
-```
-
-Let's immediately change the rule concerning indentation, so that the indentation level is two spaces.
+The configuration will be saved in the generated _eslint.config.mjs_ file:
 
 ```js
-"indent": [
-    "error",
-    2
-],
+import globals from 'globals'
+
+export default [
+  { files: ["**/*.js"], languageOptions: {sourceType: "commonjs"} },
+  { languageOptions: { globals: globals.browser } },
+]
 ```
+
+We will reformat the configuration file from its current form to the following:
+
+```js
+// ...
+export default [
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.node,
+      },
+      ecmaVersion: "latest",
+    },
+  },
+]
+```
+
+So far, our ESLint configuration file defines the _files_ option with _["**/*.js"]_, which tells ESLint to look at all JavaScript files in our project folder. The _languageOptions_ property specifies options related to language features that ESLint should expect, in which we defined the _sourceType_ option as "commonjs". This indicates that the JavaScript code in our project uses the CommonJS module system, allowing ESLint to parse the code accordingly.  
+
+The _globals_ property specifies global variables that are predefined. The spread operator applied here tells ESLint to include all global variables defined in the _globals.node_ settings such as the _process_. In the case of browser code we would define here _globals.browser_ to allow browser specific global variables like _window_, and _document_.
+
+Finally, the _ecmaVersion_ property is set to "latest". This sets the ECMAScript version to the latest available version, meaning ESLint will understand and properly lint the latest JavaScript syntax and features.
+
+We want to make use of [ESLint's recommended](https://eslint.org/docs/latest/use/configure/configuration-files#using-predefined-configurations) settings along with our own. The _@eslint/js_ package we installed earlier provides us with predefined configurations for ESLint. We'll import it and enable it in the configuration file:
+
+```js
+// ...
+import js from '@eslint/js'
+// ...
+
+export default [
+  js.configs.recommended, // highlight-line
+  {
+    // ...
+  }
+]
+```
+
+We've added the _js.configs.recommended_ to the top of the configuration array, this ensures that ESLint's recommended settings are applied first before our own custom options.
+
+Let's continue building the configuration file. Install a [plugin](https://eslint.style/packages/js) that defines a set of code style-related rules:
+
+```bash
+npm install --save-dev @stylistic/eslint-plugin-js
+```
+
+Import and enable the plugin, and add these four code style rules:
+
+```js
+// ...
+import stylisticJs from '@stylistic/eslint-plugin-js'
+
+export default [
+  {
+    // ...
+    plugins: {
+      '@stylistic/js': stylisticJs
+    },
+    rules: {
+      '@stylistic/js/indent': [
+        'error',
+        2
+      ],
+      '@stylistic/js/linebreak-style': [
+        'error',
+        'unix'
+      ],
+      '@stylistic/js/quotes': [
+        'error',
+        'single'
+      ],
+      '@stylistic/js/semi': [
+        'error',
+        'never'
+      ],
+    },
+  },
+]
+```
+
+The [plugins](https://eslint.org/docs/latest/use/configure/plugins) property provides a way to extend ESLint's functionality by adding custom rules, configurations, and other capabilities that are not available in the core ESLint library. We've installed and enabled the _@stylistic/eslint-plugin-js_, which adds JavaScript stylistic rules for ESLint. In addition, rules for indentation, line breaks, quotes, and semicolons have been added. These four rules are all defined in the [Eslint styles plugin](https://eslint.style/packages/js).
 
 Inspecting and validating a file like _index.js_ can be done with the following command:
 
@@ -279,7 +337,7 @@ It is recommended to create a separate _npm script_ for linting:
   // ...
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "node --watch index.js",
     // ...
     "lint": "eslint ." // highlight-line
   },
@@ -289,106 +347,168 @@ It is recommended to create a separate _npm script_ for linting:
 
 Now the _npm run lint_ command will check every file in the project.
 
+Files in the <em>dist</em> directory also get checked when the command is run. We do not want this to happen, and we can accomplish this by adding an object with the [ignores](https://eslint.org/docs/latest/use/configure/ignore) property that specifies an array of directories and files we want to ignore.
 
-Also the files in the <em>build</em> directory get checked when the command is run. We do not want this to happen, and we can accomplish this by creating an [.eslintignore](https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories) file in the project's root with the following contents:
-
-```bash
-build
+```js
+// ...
+export default [
+  // ...
+  { 
+    ignores: ["dist/**"],
+  },
+  //...
+]
 ```
 
-This causes the entire <em>build</em> directory to not be checked by ESlint.
+This causes the entire <em>dist</em> directory to not be checked by ESlint.
 
 Lint has quite a lot to say about our code:
 
-![](../../images/3/53ea.png)
+![terminal output of ESlint errors](../../images/3/53ea.png)
 
 Let's not fix these issues just yet.
 
-A better alternative to executing the linter from the command line is to configure a  <i>eslint-plugin</i> to the editor, that runs the linter continuously. By using the plugin you will see errors in your code immediately. You can find more information about the Visual Studio ESLint plugin [here](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
-
+A better alternative to executing the linter from the command line is to configure an _eslint-plugin_ to the editor, that runs the linter continuously. By using the plugin you will see errors in your code immediately. You can find more information about the Visual Studio ESLint plugin [here](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
 
 The VS Code ESlint plugin will underline style violations with a red line:
 
-![](../../images/3/54a.png)
-
+![Screenshot of vscode ESlint plugin showing errors](../../images/3/54a.png)
 
 This makes errors easy to spot and fix right away.
 
+ESlint has a vast array of [rules](https://eslint.org/docs/rules/) that are easy to take into use by editing the _eslint.config.mjs_ file.
 
-ESlint has a vast array of [rules](https://eslint.org/docs/rules/) that are easy to take into use by editing the <i>.eslintrc.js</i> file.
-
-
-Let's add the [eqeqeq](https://eslint.org/docs/rules/eqeqeq) rule that warns us, if equality is checked with anything but the triple equals operator. The rule is added under the <i>rules</i> field in the configuration file.
+Let's add the [eqeqeq](https://eslint.org/docs/rules/eqeqeq) rule that warns us if equality is checked with anything but the triple equals operator. The rule is added under the rules field in the configuration file.
 
 ```js
-{
+export default [
   // ...
-  'rules': {
+  rules: {
     // ...
    'eqeqeq': 'error',
   },
-}
+]
 ```
 
 While we're at it, let's make a few other changes to the rules.
 
-Let's prevent unnecessary [trailing spaces](https://eslint.org/docs/rules/no-trailing-spaces) at the ends of lines, let's require that [there is always a space before and after curly braces](https://eslint.org/docs/rules/object-curly-spacing), and let's also demand a consistent use of whitespaces in the function parameters of arrow functions.
+Let's prevent unnecessary [trailing spaces](https://eslint.org/docs/rules/no-trailing-spaces) at the ends of lines, require that [there is always a space before and after curly braces](https://eslint.org/docs/rules/object-curly-spacing), and also demand a consistent use of whitespaces in the function parameters of arrow functions.
 
 ```js
-{
+export default [
   // ...
-  'rules': {
+  rules: {
     // ...
     'eqeqeq': 'error',
     'no-trailing-spaces': 'error',
     'object-curly-spacing': [
-        'error', 'always'
+      'error', 'always'
     ],
     'arrow-spacing': [
-        'error', { 'before': true, 'after': true }
-    ]
+      'error', { 'before': true, 'after': true },
+    ],
   },
-}
+]
 ```
 
-
-Our default configuration takes a bunch of predetermined rules into use from <i>eslint:recommended</i>:
-
-```bash
-'extends': 'eslint:recommended',
-```
-
-
-This includes a rule that warns about _console.log_ commands. [Disabling](https://eslint.org/docs/user-guide/configuring#configuring-rules) a rule can be accomplished by defining its "value" as 0 in the configuration file. Let's do this for the <i>no-console</i> rule in the meantime.
+Our default configuration takes a bunch of predefined rules into use from:
 
 ```js
-{
+// ...
+
+export default [
+  js.configs.recommended,
   // ...
-  'rules': {
-    // ...
-    'eqeqeq': 'error',
-    'no-trailing-spaces': 'error',
-    'object-curly-spacing': [
-        'error', 'always'
-    ],
-    'arrow-spacing': [
-        'error', { 'before': true, 'after': true }
-    ],
-    'no-console': 0 // highlight-line
-  },
-}
+]
 ```
 
-**NB** when you make changes to the <i>.eslintrc.js</i> file, it is recommended to run the linter from the command line. This will verify that the configuration file is correctly formatted:
+This includes a rule that warns about <em>console.log</em> commands. Disabling a rule can be accomplished by defining its "value" as 0 or "off" in the configuration file. Let's do this for the _no-console_ rule in the meantime.
 
-![](../../images/3/55.png)
+```js
+[
+  {
+    // ...
+    rules: {
+      // ...
+      'eqeqeq': 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': [
+        'error', 'always'
+      ],
+      'arrow-spacing': [
+        'error', { 'before': true, 'after': true },
+      ],
+      'no-console': 'off',
+    },
+  },
+]
+```
 
+Disabling the no-console rule will allow us to use console.log statements without ESLint flagging them as issues. This can be particularly useful during development when you need to debug your code. Here's the complete configuration file with all the changes we have made so far:
+
+```js
+import globals from "globals";
+import stylisticJs from '@stylistic/eslint-plugin-js'
+import js from '@eslint/js'
+
+export default [
+  js.configs.recommended,
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.node,
+      },
+      ecmaVersion: "latest",
+    },
+    plugins: {
+      '@stylistic/js': stylisticJs
+    },
+    rules: {
+      '@stylistic/js/indent': [
+        'error',
+        2
+      ],
+      '@stylistic/js/linebreak-style': [
+        'error',
+        'unix'
+      ],
+      '@stylistic/js/quotes': [
+        'error',
+        'single'
+      ],
+      '@stylistic/js/semi': [
+        'error',
+        'never'
+      ],
+      'eqeqeq': 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': [
+        'error', 'always'
+      ],
+      'arrow-spacing': [
+        'error', { 'before': true, 'after': true },
+      ],
+      'no-console': 'off',
+    },
+  },
+  { 
+    ignores: ["dist/**", "build/**"],
+  },
+]
+```
+
+**NB** when you make changes to the _eslint.config.mjs_ file, it is recommended to run the linter from the command line. This will verify that the configuration file is correctly formatted:
+
+![terminal output from npm run lint](../../images/3/lint2.png)
 
 If there is something wrong in your configuration file, the lint plugin can behave quite erratically.
 
 Many companies define coding standards that are enforced throughout the organization through the ESlint configuration file. It is not recommended to keep reinventing the wheel over and over again, and it can be a good idea to adopt a ready-made configuration from someone else's project into yours. Recently many projects have adopted the Airbnb [Javascript style guide](https://github.com/airbnb/javascript) by taking Airbnb's [ESlint](https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb) configuration into use.
 
-You can find the code for our current application in its entirety in the <i>part3-7</i> branch of [this github repository](https://github.com/fullstack-hy2020/part3-notes-backend/tree/part3-7).
+You can find the code for our current application in its entirety in the <i>part3-7</i> branch of [this GitHub repository](https://github.com/fullstack-hy2020/part3-notes-backend/tree/part3-7).
+
 </div>
 
 <div class="tasks">
