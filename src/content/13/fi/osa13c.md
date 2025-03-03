@@ -50,7 +50,8 @@ module.exports = {
         allowNull: false
       },
       important: {
-        type: DataTypes.BOOLEAN
+        type: DataTypes.BOOLEAN,
+        allowNull: false
       },
       date: {
         type: DataTypes.DATE
@@ -89,7 +90,7 @@ Migraatiotiedostossa on [määriteltynä](https://sequelize.org/master/manual/mi
 
 Migraatiomme sisältää kolme operaatiota, ensimmäinen luo taulun <i>notes</i>, toinen taulun <i>users</i> ja kolmas lisää tauluun <i>notes</i> viiteavaimen muistiinpanon luojaan. Skeeman muutokset määritellään [queryInterface](https://sequelize.org/master/manual/query-interface.html)-olion metodeja kutsumalla.
 
-Migraatioiden määrittelyssä on oleellista muistaa, että toisin kuin modeleissa, sarakkeiden ja taulujen nimet kirjoitetaan snake case -muodossa:
+Migraatioiden määrittelyssä on oleellista muistaa, että toisin kuin modeleissa, sarakkeiden ja taulujen nimet kirjoitetaan snake case ‑muodossa:
 
 ```js
 await queryInterface.addColumn('notes', 'user_id', { // highlight-line
@@ -116,18 +117,11 @@ const Sequelize = require('sequelize')
 const { DATABASE_URL } = require('./config')
 const { Umzug, SequelizeStorage } = require('umzug') // highlight-line
 
-const sequelize = new Sequelize(DATABASE_URL, {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
-});
+const sequelize = new Sequelize(DATABASE_URL)
 
-// highlight-start
+ // highlight-start
 const runMigrations = async () => {
-  const migrator = new Umzug({
+  const migrator = new Umzug({ 
     migrations: {
       glob: 'migrations/*.js',
     },
@@ -141,12 +135,14 @@ const runMigrations = async () => {
     files: migrations.map((mig) => mig.name),
   })
 }
-// highlight-end
+ // highlight-end
 
 const connectToDatabase = async () => {
   try {
     await sequelize.authenticate()
-    await runMigrations() // highlight-line
+    /*  highlight-start */
+    await runMigrations()
+    /* highlight-end */
     console.log('database connected')
   } catch (err) {
     console.log('connecting database failed')
@@ -184,7 +180,7 @@ Jos käynnistämme sovelluksen uudelleen, lokistakin on pääteltävissä että 
 Sovelluksen tietokantaskeema näyttää nyt seuraavalta
 
 ```sql
-username=> \d
+postgres=# \d
                  List of relations
  Schema |     Name     |   Type   |     Owner
 --------+--------------+----------+----------------
@@ -198,7 +194,7 @@ username=> \d
 Sequelize on siis luonut taulun <i>migrations</i>, jonka avulla se pitää kirjaa suoritetuista migraatiosta. Taulun sisältö näyttää seuraavalta:
 
 ```sql
-username=> select * from migrations;
+postgres=# select * from migrations;
                    name
 -------------------------------------------
  20211209_00_initialize_notes_and_users.js
@@ -472,7 +468,9 @@ const rollbackMigration = async () => {
 }
 // highlight-end
 
-module.exports = { connectToDatabase, sequelize, rollbackMigration } // highlight-line
+/* highlight-start */
+module.exports = { connectToDatabase, sequelize, rollbackMigration }
+/* highlight-end */
 ```
 
 Tehdään tiedosto <i>util/rollback.js</i>, jonka kautta npm-skripti pääsee suorittamaan määritellyn migraation peruvan funktion:
@@ -487,7 +485,7 @@ ja itse skripti:
 
 ```json
 {
-    "scripts": {
+  "scripts": {
     "dev": "nodemon index.js",
     "migration:down": "node util/rollback.js" // highlight-line
   },
@@ -524,13 +522,13 @@ Laajenna sovellusta (migraation avulla) siten, että blogeille tulee kirjoitusvu
 
 <div class="content">
 
-### Monen suhde moneen -yhteydet
+### Monen suhde moneen ‑yhteydet
 
 Jatketaan sovelluksen laajentamista siten, että jokainen käyttäjä voidaan lisätä yhteen tai useampaan <i>tiimiin</i>.
 
 Koska yhteen tiimiin voi liittyä mielivaltainen määrä käyttäjiä, ja yksi käyttäjä voi liittyä mielivaltaiseen määrään tiimejä, on kysessä [many-to-many](https://sequelize.org/master/manual/assocs.html#many-to-many-relationships) eli monen-suhde-moneen tyyppinen yhteys, joka perinteisesti toteutetaan relaatiotietokannoissa <i>liitostaulun</i> avulla.
 
-Luodaan nyt tiimin sekä liitostaulun tarvitsema koodi. Migraatio on seuraavassa:
+Luodaan nyt tiimin sekä liitostaulun tarvitsema koodi. Tiedostoon <i>20211209_02_add_teams_and_memberships.js</i> talletettava migraatio on seuraavassa:
 
 ```js
 const { DataTypes } = require('sequelize')
@@ -664,7 +662,7 @@ module.exports = {
 }
 ```
 
-Huomaa eroavaisuus liitostaulun migraation ja modelin välillä viiteavainkenttien määrittelyssä. Migraatiossa kentät määritellään snake case -muodossa:
+Huomaa eroavaisuus liitostaulun migraation ja modelin välillä viiteavainkenttien määrittelyssä. Migraatiossa kentät määritellään snake case ‑muodossa:
 
 ```js
 await queryInterface.createTable('memberships', {
@@ -702,7 +700,7 @@ Membership.init({
 ```
 
 
-Luodaan nyt konsolista pari tiimiä sekä muutama jäsenyys:
+Luodaan nyt pqql-konsolista pari tiimiä sekä muutama jäsenyys:
 
 ```js
 insert into teams (name) values ('toska');
@@ -860,9 +858,9 @@ router.get('/:id', async (req, res) => {
 ```
 ### Monen suhde moneen uudelleen
 
-Tehdään sovellukseen vielä toinen monesta moneen -yhteys. Jokaiseen muistiinpanoon liittyy sen luonut käyttäjä viiteavaimen kautta. Päätetään, että sovellus tukee myös sitä, että muistiinpanoon voidaan liittää muitakin käyttäjiä, ja että käyttäjään voi liittyä mielivaltainen määrä jonkun muun käyttäjän tekemiä muistiinpanoja. Ajatellaan että nämä muistiinpanot ovat sellaisia, jotka käyttäjä on <i>merkinnyt</i> itselleen.
+Tehdään sovellukseen vielä toinen monesta moneen ‑yhteys. Jokaiseen muistiinpanoon liittyy sen luonut käyttäjä viiteavaimen kautta. Päätetään, että sovellus tukee myös sitä, että muistiinpanoon voidaan liittää muitakin käyttäjiä, ja että käyttäjään voi liittyä mielivaltainen määrä jonkun muun käyttäjän tekemiä muistiinpanoja. Ajatellaan että nämä muistiinpanot ovat sellaisia, jotka käyttäjä on <i>merkinnyt</i> itselleen.
 
-Tehdään tilannetta varten liitostaulu <i>user_notes</i>. Migraatio on suoraviivainen:
+Tehdään tilannetta varten liitostaulu <i>user\_notes</i>. Migraatio, joka tallennetaan tiedostoon <i>20211209\_03\_add\_user\_notes.js</i> on suoraviivainen:
 
 ```js
 const { DataTypes } = require('sequelize')
@@ -1004,7 +1002,7 @@ insert into user_notes (user_id, note_id) values (2, 2);
 
 Lopputulos on toimiva:
 
-![](../../images/13/5.png)
+![](../../images/13/5a.png)
 
 Entä jos haluaisimme, että käyttäjän merkitsemissä muistiinpanoissa olisi myös tieto muistiinpanon tekijästä? Tämä onnistuu lisäämällä liitetyille muistiinpanoille oma <i>include:</i>
 
@@ -1199,7 +1197,30 @@ Muutetaan nyt yksittäisen käyttäjän routea siten, että se hakee kannasta k�
 
 ```js
 router.get('/:id', async (req, res) => {
-  const user = await User.findByPk(req.params.id)
+  const user = await User.findByPk(req.params.id, {
+    attributes: { exclude: [''] } ,
+    include:[{
+        model: note,
+        attributes: { exclude: ['userId'] }
+      },
+      {
+        model: Note,
+        as: 'marked_notes',
+        attributes: { exclude: ['userId']},
+        through: {
+          attributes: []
+        },
+        include: {
+          model: user,
+          attributes: ['name']
+        }
+      },
+    ]
+  })
+
+  if (!user) {
+    return res.status(404).end()
+  }
 
   // highlight-start
   if (!user) {
@@ -1224,7 +1245,7 @@ Nyt siis <i>User.findByPk</i>-kysely ei hae joukkueita, vaan ne haetaan tarvitta
 
 #### Modelien ominaisuuksia
 
-On joitain tilanteita, missä emme oletusarvoisesti halua käsitellä kaikkia tietyn taulun rivejä. Eräs tälläinen tapaus voisi olla se, että emme normaalisti haluasi näyttää sovelluksessamme niitä käyttäjiä joiden tunnus on suljettu (<i>disabled</i>). Tälläisessä tilanteessa voisimme määritellä modelille oletusarvoisen [scopen](https://sequelize.org/master/manual/scopes.html):
+On joitain tilanteita, missä emme oletusarvoisesti halua käsitellä kaikkia tietyn taulun rivejä. Eräs tällainen tapaus voisi olla se, että emme normaalisti haluasi näyttää sovelluksessamme niitä käyttäjiä joiden tunnus on suljettu (<i>disabled</i>). Tälläisessä tilanteessa voisimme määritellä modelille oletusarvoisen [scopen](https://sequelize.org/master/manual/scopes.html):
 
 ```js
 class User extends Model {}
@@ -1486,10 +1507,6 @@ Jos haluat suoritusmerkinnän, merkitse kurssi suoritetuksi:
 
 ![Submissions](../../images/11/21.png)
 
-Huomautus "exam done in Moodle" viittaa [Full Stack Open kurssin kokeeseen](/en/part0/general_info#sign-up-for-the-exam), joka tulee olla suoritettuna ennen kun voit saada tästä osasta opintopisteet.
-
 **Huomaa**, että suoritusmerkintää ei voida kirjata, ellet ole ilmoittautunut tätä osaa vastaavaan "kurssiin palaan", katso lisätietoja ilmoittautumisesta [täältä](/osa0/yleista#osat-ja-suorittaminen).
-
-**Huomaa myös että**, suoritusmerkintöjä tästä osasta ei anneta ennen kuin betatestausvaihe on lopussa.
 
 </div>

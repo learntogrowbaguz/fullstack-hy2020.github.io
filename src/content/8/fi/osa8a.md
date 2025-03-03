@@ -23,7 +23,7 @@ Jos kyseessä olisi usein käytetty toiminnallisuus, voitaisiin sitä varten tot
 
 GraphQL:n avulla toteutettu rajapinta sopii tämänkaltaisiin tilanteisiin hyvin.
 
-GraphQL:ssä periaatteena on, että selaimen koodi muodostaa <i>kyselyn</i>, joka kuvailee halutun datan ja lähettää sen API:lle HTTP POST -pyynnöllä. Toisin kuin REST:issä, GraphQL:ssä kaikki kyselyt kohdistetaan samaan osoitteeseen ja ovat POST-tyyppisiä.
+GraphQL:ssä periaatteena on, että selaimen koodi muodostaa <i>kyselyn</i>, joka kuvailee halutun datan ja lähettää sen API:lle HTTP POST ‑pyynnöllä. Toisin kuin REST:issä, GraphQL:ssä kaikki kyselyt kohdistetaan samaan osoitteeseen ja ovat POST-tyyppisiä.
 
 Edellä kuvatun skenaarion data saataisiin haettua (suurinpiirtein) seuraavan kaltaisella kyselyllä:
 
@@ -236,7 +236,7 @@ Kuten huomaamme, GraphQL-kyselyn ja siihen vastauksena tulevan JSON:in muodoilla
 
 GraphQL:n skeema kuvaa ainoastaan palvelimen ja sitä käyttävien clientien välillä liikkuvan tiedon muodon. Tieto voi olla organisoituna ja talletettuna palvelimeen ihan missä muodossa tahansa.
 
-Nimestään huolimatta GraphQL:llä ei itseasiassa ole mitään tekemistä tietokantojen kanssa, se ei ota mitään kantaa siihen miten data on tallennettu. GraphQL-periaattella toimivan API:n käyttämä data voi siis olla talletettu relaatiotietokantaan, dokumenttitietokantaan tai muille palvelimille, joita GraphQL-palvelin käyttää vaikkapa REST:in välityksellä. 
+Nimestään huolimatta GraphQL:llä ei itse asiassa ole mitään tekemistä tietokantojen kanssa, se ei ota mitään kantaa siihen miten data on tallennettu. GraphQL-periaattella toimivan API:n käyttämä data voi siis olla talletettu relaatiotietokantaan, dokumenttitietokantaan tai muille palvelimille, joita GraphQL-palvelin käyttää vaikkapa REST:in välityksellä.
 
 ### Apollo Server
 
@@ -245,13 +245,14 @@ Toteutetaan nyt GraphQL-palvelin tämän hetken johtavaa kirjastoa [Apollo Serve
 Luodaan uusi npm-projekti komennolla _npm init_ ja asennetaan tarvittavat riippuvuudet
 
 ```bash
-npm install apollo-server graphql
+npm install @apollo/server graphql
 ```
 
 Alustava toteutus on seuraavassa
 
 ```js
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer } = require('@apollo/server')
+const { startStandaloneServer } = require('@apollo/server/standalone')
 
 let persons = [
   {
@@ -276,7 +277,7 @@ let persons = [
   },
 ]
 
-const typeDefs = gql`
+const typeDefs = `
   type Person {
     name: String!
     phone: String
@@ -306,12 +307,14 @@ const server = new ApolloServer({
   resolvers,
 })
 
-server.listen().then(({ url }) => {
+startStandaloneServer(server, {
+  listen: { port: 4000 },
+}).then(({ url }) => {
   console.log(`Server ready at ${url}`)
 })
 ```
 
-Toteutuksen ytimessä on _ApolloServer_, joka saa kaksi parametria 
+Toteutuksen ytimessä on [ApolloServer](https://www.apollographql.com/docs/apollo-server/api/apollo-server/), joka saa kaksi parametria 
 
 ```js
 const server = new ApolloServer({
@@ -322,7 +325,7 @@ const server = new ApolloServer({
 
 parametreista ensimmäinen _typeDefs_ sisältää sovelluksen käyttämän GraphQL-skeeman. 
 
-Toinen parametri on olio, joka sisältää palvelimen [resolverit](https://www.apollographql.com/docs/apollo-server/data/data/#resolver-map), eli käytännössä koodin, joka määrittelee <i>miten</i> GraphQL-kyselyihin vastataan.
+Toinen parametri on olio, joka sisältää palvelimen [resolverit](https://www.apollographql.com/docs/apollo-server/data/resolvers/), eli käytännössä koodin, joka määrittelee <i>miten</i> GraphQL-kyselyihin vastataan.
 
 Resolverien koodi on seuraavassa:
 
@@ -383,7 +386,7 @@ resolveri on funktio, joka palauttaa <i>kaikki</i> taulukon _persons_ oliot
 
 ### Apollo Studio Explorer
 
-Kun Apollo-serveriä suoritetaan sovelluskehitysmoodissa, ja mennään sivulle  [http://localhost:4000](http://localhost:4000) päästään nappia <i>Query your server</i> painamalla  sovelluskehittäjälle erittäin hyödyllisen [Apollo Studio Explorer]https://www.apollographql.com/docs/studio/explorer/explorer/)-näkymän, joka avulla on mahdollista tehdä kyselyjä palvelimelle.
+Kun Apollo-serveriä suoritetaan sovelluskehitysmoodissa, ja mennään sivulle  [http://localhost:4000](http://localhost:4000) päästään nappia <i>Query your server</i> painamalla  sovelluskehittäjälle erittäin hyödyllisen [Apollo Studio Explorer](https://www.apollographql.com/docs/studio/explorer/explorer/)-näkymän, joka avulla on mahdollista tehdä kyselyjä palvelimelle.
 
 Kokeillaan 
 
@@ -542,7 +545,7 @@ let persons = [
 ]
 ```
 
-Nyt siis palvelimen tallettamat henkilö-oliot eivät ole muodoltaan täysin samanlaisia kuin GraphQL-skeeman määrittelemät tyypin <i>Person</i> -oliot. 
+Nyt siis palvelimen tallettamat henkilö-oliot eivät ole muodoltaan täysin samanlaisia kuin GraphQL-skeeman määrittelemät tyypin <i>Person</i>-oliot. 
 
 Toisin kuin tyypille <i>Person</i> ei tyypille <i>Address</i> ole määritelty <i>id</i>-kenttää, sillä osoitteita ei ole talletettu palvelimella omaan tietorakenteeseensa.
 
@@ -696,12 +699,12 @@ Jos yritämme luoda uuden henkilön, mutta parametrit eivät vastaa skeemassa m�
 
 GraphQL:n [validoinnin](https://graphql.org/learn/validation/) avulla pystytään siis jo automaattisesti hoitamaan osa virheenkäsittelyä. 
 
-Kaikkea GraphQL ei kuitenkaan pysty hoitamaan automaattisesti. Esimerkiksi tarkemmat säännöt mutaatiolla lisättävän datan kenttien muodolle on lisättävä itse. Niistä aiheutuvat virheet tulee hoitaa [GraphQL:n poikkeuskäsittelymekanismilla](https://www.apollographql.com/docs/apollo-server/data/errors/).
+Kaikkea GraphQL ei kuitenkaan pysty hoitamaan automaattisesti. Esimerkiksi tarkemmat säännöt mutaatiolla lisättävän datan kenttien muodolle on lisättävä itse. Niistä aiheutuvat virheet tulee hoitaa itse heittämällä sopivalla [virhekoodilla](https://www.apollographql.com/docs/apollo-server/data/errors/#built-in-error-codes) varustettu [GraphQLError](https://www.apollographql.com/docs/apollo-server/data/errors/#custom-errors).
 
 Estetään saman nimen lisääminen puhelinluetteloon useampaan kertaan:
 
 ```js
-const { ApolloServer, UserInputError, gql } = require('apollo-server') // highlight-line
+const { GraphQLError } = require('graphql') // highlight-line
 
 // ...
 
@@ -711,8 +714,11 @@ const resolvers = {
     addPerson: (root, args) => {
       // highlight-start
       if (persons.find(p => p.name === args.name)) {
-        throw new UserInputError('Name must be unique', {
-          invalidArgs: args.name,
+        throw new GraphQLError('Name must be unique', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name
+          }
         })
       }
       // highlight-end
@@ -725,9 +731,9 @@ const resolvers = {
 }
 ```
 
-Eli jos lisättävä nimi on jo luettelossa heitetään poikkeus _UserInputError_.
+Eli jos lisättävä nimi on jo luettelossa heitetään poikkeus _GraphQLError_.
 
-![](../../images/8/6x.png)
+![](../../images/8/6new.png)
 
 Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/graphql-phonebook-backend/tree/part8-2), branchissa <i>part8-2</i>.
 
@@ -917,8 +923,6 @@ Joissain tilanteissa voi myös olla hyötyä nimetä kyselyt. Näin on erityises
 
 Tehtävissä toteutetaan yksinkertaisen kirjaston GraphQL:ää tarjoava backend. Ota sovelluksesi lähtökohdaksi [tämä tiedosto](https://github.com/fullstack-hy2020/misc/blob/master/library-backend.js). Muista _npm init_ ja riippuvuuksien asentaminen!
 
-Huomaa, että koodin käynnistäminen aiheuttaa alussa virheen, sillä skeeman määrittely on puutteellinen.
-
 #### 8.1: kirjojen ja kirjailijoiden määrä
 
 Toteuta kyselyt _bookCount_ ja _authorCount_ jotka palauttavat kirjojen ja kirjailijoiden lukumäärän.
@@ -943,7 +947,7 @@ pitäisi alustavalla datalla tuottaa vastaus
 }
 ```
 
-#### 8.2: kaikki kirjat ja kirjailijat
+#### 8.2: kaikki kirjat
 
 Toteuta kysely _allBooks_, joka palauttaa kaikki kirjat.
 

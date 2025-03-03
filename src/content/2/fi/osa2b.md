@@ -9,7 +9,9 @@ lang: fi
 
 Jatketaan sovelluksen laajentamista siten, että se mahdollistaa uusien muistiinpanojen lisäämisen.
 
-Jotta saisimme sivun päivittymään uusien muistiinpanojen lisäyksen yhteydessä, on parasta sijoittaa muistiinpanot komponentin <i>App</i> tilaan. Eli importataan funktio [useState](https://reactjs.org/docs/hooks-state.html) ja määritellään sen avulla komponentille tila, joka saa aluksi arvokseen propsina välitettävän muistiinpanot alustavan taulukon: 
+### Muistiinpanojen tallettaminen komponentin tilaan
+
+Jotta saisimme sivun päivittymään uusien muistiinpanojen lisäyksen yhteydessä, on parasta sijoittaa muistiinpanot komponentin <i>App</i> tilaan. Eli importataan funktio [useState](https://react.dev/reference/react/useState) ja määritellään sen avulla komponentille tila, joka saa aluksi arvokseen propsina välitettävän muistiinpanot alustavan taulukon: 
 
 ```js
 import { useState } from 'react' // highlight-line
@@ -42,6 +44,10 @@ const App = (props) => {
   // ...
 }
 ```
+
+Voimme vielä havainnollistaa tilanteen React Developer Toolsin avulla:
+
+![](../../images/2/30.png)
 
 Jos haluaisimme lähteä liikkeelle tyhjästä muistiinpanojen listasta, annettaisiin tilan alkuarvoksi tyhjä taulukko, ja koska komponentti ei käyttäisi ollenkaan propseja, voitaisiin parametri <em>props</em> jättää kokonaan määrittelemättä:
 
@@ -98,7 +104,7 @@ const addNote = (event) => {
 }
 ```
 
-Parametrin <em>event</em> arvona on metodin kutsun aiheuttama [tapahtuma](https://reactjs.org/docs/handling-events.html).
+Parametrin <em>event</em> arvona on metodin kutsun aiheuttama [tapahtuma](https://react.dev/learn/responding-to-events).
 
 Tapahtumankäsittelijä kutsuu heti tapahtuman metodia <em>event.preventDefault()</em> jolla se estää lomakkeen lähetyksen oletusarvoisen toiminnan, joka aiheuttaisi mm. sivun uudelleenlatautumisen.
 
@@ -112,7 +118,7 @@ Miten pääsemme käsiksi lomakkeen <i>input</i>-komponenttiin syötettyyn dataa
 
 ### Kontrolloitu komponentti
 
-Tapoja on useampia, joista tutustumme ensin [kontrolloituina komponentteina](https://reactjs.org/docs/forms.html#controlled-components) toteutettuihin lomakkeisiin.
+Tapoja on useampia, joista tutustumme ensin [kontrolloituina komponentteina](https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable) toteutettuihin lomakkeisiin.
 
 Lisätään komponentille <i>App</i> tila <em>newNote</em> lomakkeen syötettä varten **ja** määritellään se <i>input</i>-komponentin attribuutin <i>value</i> arvoksi:
 
@@ -151,7 +157,7 @@ Tilaan <em>newNote</em> määritelty "placeholder"-teksti <i>a new note...</i> i
 
 ![](../../images/2/7e.png)
 
-Koska määrittelimme syötekomponentille <i>value</i>-attribuutiksi komponentin <i>App</i> tilassa olevan muuttujan, alkaa <i>App</i> [kontrolloimaan](https://reactjs.org/docs/forms.html#controlled-components) syötekomponentin toimintaa.
+Koska määrittelimme syötekomponentille <i>value</i>-attribuutiksi komponentin <i>App</i> tilassa olevan muuttujan, alkaa <i>App</i> [kontrolloimaan](https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variables) syötekomponentin toimintaa.
 
 Jotta kontrolloidun syötekomponentin editoiminen olisi mahdollista, täytyy sille rekisteröidä <i>tapahtumankäsittelijä</i>, joka synkronoi syötekenttään tehdyt muutokset komponentin <i>App</i> tilaan:
 
@@ -211,13 +217,13 @@ const handleNoteChange = (event) => {
 
 Tapahtumaolion kenttä <em>target</em> vastaa nyt kontrolloitua <i>input</i>-kenttää ja <em>event.target.value</em> viittaa inputin syötekentän arvoon.
 
-Huomaa, että toisin kuin lomakkeen lähettämistä vastaavan tapahtuman <i>onSubmit</i> käsittelijässä, nyt oletusarvoisen toiminnan estävää metodikutusua _event.preventDefault()_ ei tarvita, sillä syötekentän muutoksella ei ole oletusarvoista toimintaa toisin kuin lomakkeen lähettämisellä.
+Huomaa, että toisin kuin lomakkeen lähettämistä vastaavan tapahtuman <i>onSubmit</i> käsittelijässä, nyt oletusarvoisen toiminnan estävää metodikutsua _event.preventDefault()_ ei tarvita, sillä syötekentän muutoksella ei ole oletusarvoista toimintaa toisin kuin lomakkeen lähettämisellä.
 
 Voit seurata konsolista miten tapahtumankäsittelijää kutsutaan:
 
 ![](../../images/2/8e.png)
 
-Muistithan jo asentaa [React Developer Toolsin](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)? Developer Toolsista näet, miten tila muuttuu syötekenttään kirjoitettaessa:
+Olethan jo asentanut [React Developer Toolsin](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)? Developer Toolsista näet, miten tila muuttuu syötekenttään kirjoitettaessa:
 
 ![](../../images/2/9ea.png)
 
@@ -228,9 +234,8 @@ const addNote = (event) => {
   event.preventDefault()
   const noteObject = {
     content: newNote,
-    date: new Date().toISOString(),
     important: Math.random() > 0.5,
-    id: notes.length + 1,
+    id: String(notes.length + 1),
   }
 
   setNotes(notes.concat(noteObject))
@@ -240,13 +245,13 @@ const addNote = (event) => {
 
 Ensin luodaan uutta muistiinpanoa vastaava olio <em>noteObject</em>, jonka sisältökentän arvo saadaan komponentin tilasta <em>newNote</em>. Yksikäsitteinen tunnus eli <i>id</i> generoidaan kaikkien muistiinpanojen lukumäärän perusteella. Koska muistiinpanoja ei poisteta, menetelmä toimii sovelluksessamme. Komennon <em>Math.random()</em> avulla muistiinpanosta tulee 50 %:n todennäköisyydellä tärkeä.
 
-Uusi muistiinpano lisätään vanhojen joukkoon oikeaoppisesti käyttämällä [osasta 1](/osa1/javascriptia#taulukot) tuttua taulukon metodia [concat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat):
+Uusi muistiinpano lisätään vanhojen joukkoon oikeaoppisesti käyttämällä [osasta 1](/osa1/java_scriptia#taulukot) tuttua taulukon metodia [concat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat):
 
 ```js
 setNotes(notes.concat(noteObject))
 ```
 
-Metodi ei muuta alkuperäistä tilaa <em>notes</em> vaan luo <i>uuden taulukon, joka sisältää myös lisättävän alkion</i>. Tämä on tärkeää, sillä Reactin tilaa [ei saa muuttaa suoraan](https://reactjs.org/docs/state-and-lifecycle.html#using-state-correctly)!
+Metodi ei muuta alkuperäistä tilaa <em>notes</em> vaan luo <i>uuden taulukon, joka sisältää myös lisättävän alkion</i>. Tämä on tärkeää, sillä Reactin tilaa [ei saa muuttaa suoraan](https://react.dev/learn/updating-objects-in-state#why-is-mutating-state-not-recommended-in-react)!
 
 Tapahtumankäsittelijä tyhjentää myös syötekenttää kontrolloivan tilan <em>newNote</em> sen funktiolla <em>setNewNote</em>.
 
@@ -254,7 +259,7 @@ Tapahtumankäsittelijä tyhjentää myös syötekenttää kontrolloivan tilan <e
 setNewNote('')
 ```
 
-Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes/tree/part2-2), branchissä <i>part2-2</i>.
+Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes-frontend/tree/part2-2), branchissä <i>part2-2</i>.
 
 ### Näytettävien elementtien filtteröinti
 
@@ -329,7 +334,7 @@ Eli jos tilan arvo <em>showAll</em> on epätosi, muuttuja <em>notesToShow</em> s
 notes.filter(note => note.important === true)
 ```
 
-Vertailuoperaatio on oikeastaan turha, koska <em>note.important</em> on arvoltaan joko <i>true</i> tai <i>false</i> eli riittää, kun kirjoitamme:
+Vertailuoperaatio on oikeastaan turha. Koska <em>note.important</em> on arvoltaan joko <i>true</i> tai <i>false</i>, riittää kun kirjoitamme:
 
 ```js
 notes.filter(note => note.important)
@@ -389,7 +394,7 @@ Napin teksti riippuu tilan <em>showAll</em> arvosta:
 show {showAll ? 'important' : 'all' }
 ```
 
-Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes/tree/part2-3) branchissa <i>part2-3</i>.
+Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes-frontend/tree/part2-3) branchissa <i>part2-3</i>.
 
 </div>
 
@@ -398,8 +403,6 @@ Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://gith
 <h3>Tehtävät 2.6.-2.10.</h3>
 
 <i>Seuraavassa tehtävässä aloitettavaa ohjelmaa kehitellään eteenpäin muutamassa seuraavassa tehtävässä. Tässä ja kurssin aikana muissakin vastaantulevissa tehtäväsarjoissa ohjelman lopullisen version palauttaminen riittää, voit toki halutessasi tehdä commitin jokaisen tehtävän jälkeisestä tilanteesta, mutta se ei ole välttämätöntä.</i>
-
-**VAROITUS** create-react-app tekee projektista automaattisesti Git-repositorion ellei sovellusta luoda jo olemassa olevan repositorion sisälle. Todennäköisesti **et halua** että projektista tulee repositorio, joten suorita projektin juuressa komento _rm -rf .git_.
 
 <h4>2.6: puhelinluettelo step1</h4>
 

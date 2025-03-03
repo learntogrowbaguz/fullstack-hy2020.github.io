@@ -1,3 +1,4 @@
+import translationProgress from '../../utils/translationProgress';
 import { Banner } from '../Banner/Banner';
 import { ContentLiftup } from '../ContentLiftup/ContentLiftup';
 import React from 'react';
@@ -12,7 +13,7 @@ const partNameTranslations = {
     'Palvelimen ohjelmointi NodeJS:n Express-kirjastolla',
     'Express-sovellusten testaaminen, käyttäjänhallinta',
     'React-sovelluksen testaaminen',
-    'Sovelluksen tilan hallinta Redux-kirjastolla',
+    'Edistynyt tilan hallinta',
     'React router, custom-hookit, tyylikirjastot ja webpack',
     'GraphQL',
     'TypeScript',
@@ -28,14 +29,30 @@ const partNameTranslations = {
     'Programming a server with NodeJS and Express',
     'Testing Express servers, user administration',
     'Testing React apps',
-    'State management with Redux',
+    'Advanced state management',
     'React router, custom hooks, styling app with CSS and webpack',
     'GraphQL',
     'TypeScript',
     'React Native',
     'CI/CD',
     'Containers',
-    'Using relational databases'
+    'Using relational databases',
+  ],
+  es: [
+    'Fundamentos de las aplicaciones web',
+    'Introducción a React',
+    'Comunicándose con el servidor',
+    'Programando un servidor con NodeJS y Express',
+    'Probando servidores Express, administración de usuarios',
+    'Probando aplicaciones React',
+    'Gestión avanzada del estado',
+    'React router, custom hooks, estilando la aplicación con CSS y webpack',
+    'GraphQL',
+    'TypeScript',
+    'React Native',
+    'CI/CD (Disponible en inglés)',
+    'Contenedores',
+    'Utilizando bases de datos relacionales',
   ],
   zh: [
     'Web 应用的基础设施',
@@ -51,8 +68,49 @@ const partNameTranslations = {
     'React Native',
     'CI/CD',
     '容器',
-    '使用关系型数据库'
+    '使用关系型数据库',
   ],
+  fr: [
+    'Introduction aux applications Web',
+    'Premiers pas avec React',
+    'Communiquer avec le serveur',
+    'Programmation côté serveur avec NodeJS et Express',
+    'Test des serveurs Express, gestion des utilisateurs',
+    'Tester des applications React',
+    "Gestion d'état avec Redux",
+    'React router, hooks personnalisés, application de style avec CSS et webpack',
+    'GraphQL',
+    'TypeScript',
+    'React Native',
+    'CI/CD',
+    'Conteneurs',
+    'Utilisation de bases de donées relationnelles',
+  ],
+  ptbr: [
+    'Fundamentos de aplicações web',
+    'Introdução ao React',
+    'Comunicação com o servidor',
+    'Programando um servidor com NodeJS e Express',
+    'Teste de servidores Express e Administração de Usuários',
+    'Teste de aplicações React',
+    'Gerenciamento de Estado com Redux',
+    'React router, hooks personalizados, estilização de aplicações com CSS e Webpack',
+    'GraphQL',
+    'TypeScript',
+    'React Native',
+    'CI/CD',
+    'Containers',
+    'Utilizando bancos de dados relacionais',
+  ],
+};
+
+const partName = {
+  en: 'Part',
+  es: 'Parte',
+  fi: 'Osa',
+  fr: 'Partie',
+  ptbr: 'Parte',
+  zh: '部分',
 };
 
 export const PartBanner = ({ lang }) => {
@@ -69,6 +127,10 @@ export const PartBanner = ({ lang }) => {
           const partNames =
             partNameTranslations[lang] || partNameTranslations.en;
 
+          const summary =
+            translationProgress[lang] < part
+              ? partNames[part] + ' (english only)'
+              : partNames[part];
           return (
             <ContentLiftup
               key={partNames[part]}
@@ -78,8 +140,8 @@ export const PartBanner = ({ lang }) => {
                 alt: partNames[part],
               }}
               hoverImageSrc={require(`../../images/thumbnails/part-${part}_ovr.svg`)}
-              name={`${lang === 'fi' ? 'Osa' : 'Part'} ${part}`}
-              summary={partNames[part]}
+              name={`${partName[lang]} ${part}`}
+              summary={summary}
               path={getPartTranslationPath(lang, part)}
             />
           );

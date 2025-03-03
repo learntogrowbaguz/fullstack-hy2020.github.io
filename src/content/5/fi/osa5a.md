@@ -13,9 +13,9 @@ Frontend näyttää tällä hetkellä olemassaolevat muistiinpanot ja antaa muut
 
 Toteutetaan nyt osa käyttäjienhallinnan edellyttämästä toiminnallisuudesta frontendiin. Aloitetaan käyttäjän kirjautumisesta. Oletetaan vielä tässä osassa, että käyttäjät luodaan suoraan backendiin.
 
-Sovelluksen yläosaan on nyt lisätty kirjautumislomake, ja uuden muistiinpanon lisäämisestä huolehtiva lomake on siirretty muistiinpanojen alapuolelle:
+Sovelluksen yläosaan on nyt lisätty kirjautumislomake:
 
-![](../../images/5/1e.png)
+![Sovellus koostuu syötekentät username ja password koostuvasta kirjautumislomakkeesta, muistiinpanojen listasta, sekä lomakkeesta joka mahdollistaa uuden muistiinpanon luomisen (ainoastaan yksi syötekenttä muistiinpanon sisällölle). Jokaisen listalla olevan muistiinpanon kohdalla on nappi, jonka avulla muistiinpano voidaan merkata tärkeäksi/epätärkeäksi](../../images/5/1new.png)
 
 Komponentin <i>App</i> koodi näyttää seuraavalta:
 
@@ -86,7 +86,7 @@ const App = () => {
 export default App
 ```
 
-Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes/tree/part5-1), branchissa <i>part5-1</i>.
+Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes-frontend/tree/part5-1), branchissa <i>part5-1</i>.
 
 Kirjautumislomakkeen käsittely noudattaa samaa periaatetta kuin [osassa 2](/osa2#lomakkeet). Lomakkeen kenttiä varten on lisätty komponentin tilaan <i>username</i> ja <i>password</i>. Molemmille kentille on määritelty muutoksenkäsittelijä, joka synkronoi kenttään tehdyt muutokset komponentin <i>App</i> tilaan. Muutoksenkäsittelijä on yksinkertainen, se destrukturoi parametrina tulevasta oliosta kentän <i>target</i> ja asettaa sen arvon vastaavaan tilaan:
 
@@ -96,7 +96,7 @@ Kirjautumislomakkeen käsittely noudattaa samaa periaatetta kuin [osassa 2](/osa
 
 Kirjautumislomakkeen lähettämisestä vastaava metodi _handleLogin_ ei tee vielä mitään.
 
-Kirjautuminen tapahtuu tekemällä HTTP POST -pyyntö palvelimen osoitteeseen <i>api/login</i>. Eristetään pyynnön tekevä koodi omaan moduuliinsa, tiedostoon <i>services/login.js</i>.
+Kirjautuminen tapahtuu tekemällä HTTP POST ‑pyyntö palvelimen osoitteeseen <i>api/login</i>. Eristetään pyynnön tekevä koodi omaan moduuliinsa, tiedostoon <i>services/login.js</i>.
 
 Käytetään HTTP-pyynnön tekemiseen nyt promisejen sijaan <i>async/await</i>-syntaksia:
 
@@ -222,8 +222,8 @@ const App = () => {
 
       <Notification message={errorMessage} />
 
-      {user === null && loginForm()} // highlight-line
-      {user !== null && noteForm()} // highlight-line
+      {!user && loginForm()} // highlight-line
+      {user && noteForm()} // highlight-line
 
       <div>
         <button onClick={() => setShowAll(!showAll)}>
@@ -246,39 +246,13 @@ const App = () => {
 }
 ```
 
-Lomakkeiden ehdolliseen renderöintiin käytetään hyväksi aluksi hieman erikoiselta näyttävää, mutta Reactin yhteydessä [yleisesti käytettyä kikkaa](https://reactjs.org/docs/conditional-rendering.html#inline-if-with-logical--operator):
+Lomakkeiden ehdolliseen renderöintiin käytetään hyväksi aluksi hieman erikoiselta näyttävää, mutta Reactin yhteydessä [yleisesti käytettyä kikkaa](https://react.dev/learn/conditional-rendering#logical-and-operator-):
 
 ```js
-{
-  user === null && loginForm()
-}
+{!user && loginForm()}
 ```
 
-Jos ensimmäinen osa evaluoituu epätodeksi eli on [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy), ei toista osaa eli lomakkeen generoivaa koodia suoriteta ollenkaan.
-
-Voimme suoraviivaistaa edellistä vielä hieman käyttämällä [kysymysmerkkioperaattoria](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator):
-
-```js
-return (
-  <div>
-    <h1>Notes</h1>
-
-    <Notification message={errorMessage}/>
-
-    {user === null ?
-      loginForm() :
-      noteForm()
-    }
-
-    <h2>Notes</h2>
-
-    // ...
-
-  </div>
-)
-```
-
-Eli jos _user === null_ on [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy), suoritetaan _loginForm_ ja muussa tapauksessa _noteForm_.
+Jos ensimmäinen osa evaluoituu epätodeksi eli on [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) (eli <i>user</i> ei ole määritelty), ei toista osaa eli lomakkeen generoivaa koodia suoriteta ollenkaan.
 
 Tehdään vielä sellainen muutos, että jos käyttäjä on kirjautunut, renderöidään kirjautuneen käyttäjän nimi:
 
@@ -289,13 +263,12 @@ return (
 
     <Notification message={errorMessage} />
 
-    {user === null ?
-      loginForm() :
-      <div>
-        <p>{user.name} logged in</p>
-        {noteForm()}
+    {!user && loginForm()} 
+    {user && <div>
+       <p>{user.name} logged in</p>
+         {noteForm()}
       </div>
-    }
+    } 
 
     <h2>Notes</h2>
 
@@ -310,7 +283,7 @@ Ratkaisu näyttää hieman rumalta, mutta jätämme sen koodiin toistaiseksi.
 Sovelluksemme pääkomponentti <i>App</i> on tällä hetkellä jo aivan liian laaja ja nyt tekemämme muutokset ovat ilmeinen signaali siitä, että lomakkeet olisi syytä refaktoroida omiksi komponenteikseen. Jätämme sen kuitenkin vapaaehtoiseksi harjoitustehtäväksi.
 
 
-Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes/tree/part5-2), branchissa <i>part5-2</i>. 
+Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes-frontend/tree/part5-2), branchissa <i>part5-2</i>. 
 
 
 ### Muistiinpanojen luominen
@@ -346,7 +319,7 @@ let token = null // highlight-line
 
 // highlight-start
 const setToken = newToken => {
-  token = `bearer ${newToken}`
+  token = `Bearer ${newToken}`
 }
 // highlight-end
 
@@ -374,7 +347,7 @@ const update = (id, newObject) => {
 export default { getAll, create, update, setToken } // highlight-line
 ```
 
-Moduulille on määritelty vain moduulin sisällä näkyvä muuttuja _token_, jolle voidaan asettaa arvo moduulin exporttaamalla funktiolla _setToken_. Async/await-syntaksiin muutettu _create_ asettaa moduulin tallessa pitämän tokenin <i>Authorization</i>-headeriin, jonka se antaa axiosille metodin <i>post</i> kolmantena parametrina.
+Moduulille on määritelty vain moduulin sisällä näkyvä muuttuja _token_, jolle voidaan asettaa arvo moduulin exporttaamalla funktiolla _setToken_. Async/await-syntaksiin muutettu _create_ asettaa moduulin tallessa pitämän tokenin <i>Authorization</i>-headeriin, jonka se antaa Axiosille metodin <i>post</i> kolmantena parametrina.
 
 Kirjautumisesta huolehtivaa tapahtumankäsittelijää pitää vielä viilata sen verran, että se kutsuu metodia <code>noteService.setToken(user.token)</code> onnistuneen kirjautumisen yhteydessä:
 
@@ -424,7 +397,7 @@ Storageen talletetut arvot säilyvät vaikka sivu uudelleenladattaisiin. Storage
 
 Laajennetaan sovellusta siten, että se asettaa kirjautuneen käyttäjän tiedot local storageen.
 
-Koska storageen talletettavat arvot ovat [merkkijonoja](https://developer.mozilla.org/en-US/docs/Web/API/DOMString), emme voi tallettaa storageen suoraan JavaScript-oliota, vaan ne on muutettava ensin JSON-muotoon metodilla _JSON.stringify_. Vastaavasti kun JSON-muotoinen olio luetaan local storagesta, on se parsittava takaisin JavaScript-olioksi metodilla _JSON.parse_.
+Koska storageen talletettavat arvot ovat [merkkijonoja](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage#description), emme voi tallettaa storageen suoraan JavaScript-oliota, vaan ne on muutettava ensin JSON-muotoon metodilla _JSON.stringify_. Vastaavasti kun JSON-muotoinen olio luetaan local storagesta, on se parsittava takaisin JavaScript-olioksi metodilla _JSON.parse_.
 
 Kirjautumisen yhteyteen tehtävä muutos on seuraava:
 
@@ -453,11 +426,11 @@ Kirjautumisen yhteyteen tehtävä muutos on seuraava:
 
 Kirjautuneen käyttäjän tiedot tallentuvat nyt local storageen ja niitä voidaan tarkastella konsolista (kirjoittamalla konsoliin _window.localStorage_):
 
-![](../../images/5/3e.png)
+![Selaimen konsoliin on evaluoitu window.localStorage-objektin arvo](../../images/5/3e.png)
 
 Sovellusta on vielä laajennettava siten, että kun sivulle tullaan uudelleen, esim. selaimen uudelleenlataamisen yhteydessä, tulee sovelluksen tarkistaa löytyykö local storagesta tiedot kirjautuneesta käyttäjästä. Jos löytyy, asetetaan ne sovelluksen tilaan ja <i>noteServicelle</i>.
 
-Oikea paikka asian hoitamiselle on [effect hook](https://reactjs.org/docs/hooks-effect.html) eli [osasta 2](/osa2/palvelimella_olevan_datan_hakeminen#effect-hookit) tuttu mekanismi, jonka avulla haemme palvelimelle talletetut muistiinpanot frontendiin. 
+Oikea paikka asian hoitamiselle on [effect hook](https://react.dev/reference/react/useEffect) eli [osasta 2](/osa2/palvelimella_olevan_datan_hakeminen#effect-hookit) tuttu mekanismi, jonka avulla haemme palvelimelle talletetut muistiinpanot frontendiin. 
 
 Effect hookeja voi olla useita, joten tehdään oma hoitamaan kirjautuneen käyttäjän ensimmäinen sivun lataus:
 
@@ -493,7 +466,7 @@ const App = () => {
 }
 ```
 
-Efektin parametrina oleva tyhjä taulukko varmistaa sen, että efekti suoritetaan ainoastaan kun komponentti renderöidään [ensimmäistä kertaa](https://reactjs.org/docs/hooks-reference.html#conditionally-firing-an-effect).
+Efektin parametrina oleva tyhjä taulukko varmistaa sen, että efekti suoritetaan ainoastaan kun komponentti renderöidään [ensimmäistä kertaa](https://react.dev/reference/react/useEffect#parameters).
 
 Nyt käyttäjä pysyy kirjautuneena sovellukseen ikuisesti. Sovellukseen olisikin kenties syytä lisätä <i>logout</i>-toiminnallisuus, joka poistaisi kirjautumistiedot local storagesta. Jätämme kuitenkin uloskirjautumisen harjoitustehtäväksi.
 
@@ -509,7 +482,7 @@ Toinen tapa on käyttää local storagen tilan kokonaan nollaavaa komentoa:
 window.localStorage.clear()
 ```
 
-Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes/tree/part5-3), branchissa <i>part5-3</i>.
+Sovelluksen tämänhetkinen koodi on kokonaisuudessaan [GitHubissa](https://github.com/fullstack-hy2020/part2-notes-frontend/tree/part5-3), branchissa <i>part5-3</i>.
 
 </div>
 
@@ -543,12 +516,18 @@ Seuraavaksi poista kloonatun sovelluksen Git-konfiguraatio:
 cd bloglist-frontend   // mene kloonatun repositorion hakemistoon
 rm -rf .git
 ```
+Windows käyttäjille:
+
+```bash
+cd bloglist-frontend   // mene kloonatun repositorion hakemistoon
+Remove-Item -Path .git -Recurse -Force
+```
 
 Sovellus käynnistyy normaaliin tapaan, mutta joudut ensin asentamaan riippuvuudet:
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
 **Toteuta frontendiin kirjautumisen mahdollistava toiminnallisuus.**
@@ -557,11 +536,11 @@ Kirjautumisen yhteydessä backendin palauttama <i>token</i> tallennetaan sovellu
 
 Jos käyttäjä ei ole kirjautunut, sivulla näytetään <i>pelkästään</i> kirjautumislomake:
 
-![](../../images/5/4e.png)
+![Näkyvillä kirjautumislomake, jolla syötekentät username ja password sekä nappi "login"](../../images/5/4e.png)
 
 Kirjautuneelle käyttäjälle näytetään kirjautuneen käyttäjän nimi sekä blogien lista:
 
-![](../../images/5/5e.png)
+![Blogit listattuna riveittän muodossa "blogin nimi", "kiroittaja", ruudulla lisäksi tieto kirjautuneesta käyttäjästä, esim. "Matti Luukkainen logged in"](../../images/5/5e.png)
 
 Tässä vaiheessa kirjautuneiden käyttäjien tietoja ei vielä tarvitse muistaa local storagen avulla.
 
@@ -593,7 +572,7 @@ Tässä vaiheessa kirjautuneiden käyttäjien tietoja ei vielä tarvitse muistaa
 
 Tee kirjautumisesta "pysyvä" local storagen avulla. Tee sovellukseen myös mahdollisuus uloskirjautumiseen:
 
-![](../../images/5/6e.png)
+![Sovellukseen lisätty nappi "logout"](../../images/5/6e.png)
 
 Uloskirjautumisen jälkeen selain ei saa muistaa kirjautunutta käyttäjää reloadauksen jälkeen.
 
@@ -601,17 +580,17 @@ Uloskirjautumisen jälkeen selain ei saa muistaa kirjautunutta käyttäjää rel
 
 Laajenna sovellusta siten, että kirjautunut käyttäjä voi luoda uusia blogeja:
 
-![](../../images/5/7e.png)
+![Sovellukseen lisätty lomake uusien blogien luomiseen. Lomakkeella kentät title, author ja url. Lomake näytetään ainoastaan kun käyttäjä on kirjaantunut sovellukseen.](../../images/5/7e.png)
 
 #### 5.4: blogilistan frontend, step4
 
 Toteuta sovellukseen notifikaatiot, jotka kertovat sovelluksen yläosassa onnistuneista ja epäonnistuneista toimenpiteistä. Esim. blogin lisäämisen yhteydessä voi antaa seuraavan notifikaation:
 
-![](../../images/5/8e.png)
+![Sovellus näyttää notifikaation "a new blog ... by ... added"](../../images/5/8e.png)
 
 Epäonnistunut kirjautuminen taas johtaa virhenotifikaatioon:
 
-![](../../images/5/9e.png)
+![Sovellus näyttää notifikaation "wrong username/password"](../../images/5/9e.png)
 
 Notifikaation tulee olla näkyvillä muutaman sekunnin ajan. Värien lisääminen ei ole pakollista.
 
@@ -626,12 +605,12 @@ Edellisen osan [lopussa](/osa4/token_perustainen_kirjautuminen#token-perustaisen
 
 Ratkaisuja ongelmaan on kaksi. Tokenille voidaan asettaa voimassaoloaika, jonka päätyttyä käyttäjä pakotetaan kirjautumaan järjestelmään uudelleen. Toinen ratkaisu on tallentaa tokeniin liittyvät tiedot palvelimen tietokantaan ja tarkastaa jokaisen API-kutsun yhteydessä, onko tokeniin liittyvä käyttöoikeus tai "sessio" edelleen voimassa. Jälkimmäistä tapaa kutsutaan usein palvelinpuolen sessioksi.
 
-Riippumatta siitä miten palvelin hoitaa tokenin voimassaolon tarkastuksen, saattaa tokenin tallentaminen local storageen olla pienimuotoinen turvallisuusriski jos sovelluksessa on ns. [Cross Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/) -hyökkäyksen mahdollistava tietoturva-aukko. XSS-hyökkäys mahdollistuu, jos sovelluksen suoritettavaksi on mahdollista ujuttaa mielivaltaista JavaScript-koodia, minkä taas ei pitäisi olla "normaalisti" Reactia käyttäen mahdollista sillä [React sanitoi](https://reactjs.org/docs/introducing-jsx.html#jsx-prevents-injection-attacks) renderöimänsä sisällön, eli ei suorita sitä koodina. 
+Riippumatta siitä miten palvelin hoitaa tokenin voimassaolon tarkastuksen, saattaa tokenin tallentaminen local storageen olla pienimuotoinen turvallisuusriski jos sovelluksessa on ns. [Cross Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/) ‑hyökkäyksen mahdollistava tietoturva-aukko. XSS-hyökkäys mahdollistuu, jos sovelluksen suoritettavaksi on mahdollista ujuttaa mielivaltaista JavaScript-koodia, minkä taas ei pitäisi olla "normaalisti" Reactia käyttäen mahdollista sillä [React sanitoi](https://legacy.reactjs.org/docs/introducing-jsx.html#jsx-prevents-injection-attacks) renderöimänsä sisällön, eli ei suorita sitä koodina. 
 
 Toki jos haluaa pelata varman päälle, ei tokenia kannata tallettaa local storageen ainakaan niissä tapauksissa, joissa potentiaalisella tokenin vääriin käsiin joutumisella olisi traagisia seurauksia. 
 
 Erääksi turvallisemmaksi ratkaisuksi kirjautuneen käyttäjän muistamiseen on tarjottu [httpOnly-evästeitä](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies) (engl. httpOnly cookies), joita käytettäessä JavaScript-koodi ei pääse ollenkaan käsiksi session muistavaan tunnisteeseen. Pelkästään yhden sivun renderöivien SPA-sovellusten toteuttaminen HttpOnly-evästeiden avulla ei kuitenkaan ole helppoa. Niiden käyttö edellyttäisi erillistä näkymää kirjautumista varten. 
 
-Täytyy kuitenkin huomata, että httpOnly-evästeisiinkään perustuva ratkaisu ei ole vedenpitävä. Joidenkin mukaan se on itse asiassa [yhtä "turvaton"](https://academind.com/tutorials/localstorage-vs-cookies-xss/) kuin local strorage. Tärkeintä on siis joka tapauksessa ohjelmoida sovellukset [tavoilla](https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html), jotka minimoivat XSS-hyökkäysten riskit.
+Täytyy kuitenkin huomata, että httpOnly-evästeisiinkään perustuva ratkaisu ei ole vedenpitävä. Joidenkin mukaan se on itse asiassa [yhtä "turvaton"](https://academind.com/tutorials/localstorage-vs-cookies-xss/) kuin local storage. Tärkeintä on siis joka tapauksessa ohjelmoida sovellukset [tavoilla](https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html), jotka minimoivat XSS-hyökkäysten riskit.
 
 </div>
